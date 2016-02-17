@@ -43,7 +43,7 @@ foreach($ignore_errors as $site){
 $errorsJson = json_decode(file_get_contents('ahps_usgs_graphs/ahpsErrors.json'),true);
 
 
-echo "<br><br>Latest Gage-Compare Log File Information<br>";
+echo "<br><br>Latest Gage-Compare Log File Information<br><br>";
 
 if(count($errorsJson) == 0){
     echo "<p>No Errors during the last run</p>";
@@ -59,7 +59,7 @@ foreach($errorsJson['sites'] as $site=>$errs){
 
 ?>
 
-Jump to a site: <input type="text" onBlur="goTo($(this).val());" ><i> Enter USGS or NWS ID</a>
+<br>Jump to a site: <input type="text" onBlur="goTo($(this).val());" ><i> Enter USGS or NWS ID</a>
 
 <?
 
@@ -74,7 +74,7 @@ foreach ($fileList as $file){
 	echo "<tr>";
 	echo "<td><a name='$nwsid' ></a>\n";
 	echo "<div id='$usgsid'></div><a href='http://water.weather.gov/ahps2/hydrograph.php?gage=$nwsid' target = '_blank'>Link to AHPS $nwsid</a>&nbsp&nbsp\n";
-	echo "<a href='http://waterdata.usgs.gov/ak/nwis/uv/?site_no=$usgsid' target = '_blank'>Link to USGS $usgsid</a>\n";
+	echo "<a href='http://waterdata.usgs.gov/nwis/uv/?site_no=$usgsid' target = '_blank'>Link to USGS $usgsid</a>\n";
     echo "&nbsp&nbsp&nbsp<a href='../ratViewer.php?USGS=$usgsid' target='_blank'>Rating Viewer</a>";
     echo "&nbsp&nbsp&nbsp<a href='http://amazon.nws.noaa.gov/cgi-bin/hads/interactiveDisplays/displayMetaData.pl?table=dcp&nwsli=$nwsid' target='_blank'>HADS Page</a>";
 	echo "&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#'>Jump to Top</a></br>\n";

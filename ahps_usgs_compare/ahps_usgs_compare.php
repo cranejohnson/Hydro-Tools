@@ -5,7 +5,7 @@
  *
  * @package Hydro_Compare
  * @author Crane Johnson <benjamin.johnson@noaa.gov>
- * @version 0.1
+ * @version 0.5
  */
 
 
@@ -84,15 +84,22 @@ if (!file_exists(IMAGE_OUTPUT)) {
  * @access public
  */
 function XYarrays($dataObj,$param,$qualifier = NULL){
+
     $xArray = array();
     $yArray = array();
     foreach($dataObj as $date => $data){
         if(!isset($data[$param])) continue;
         if(!empty($qualifier)){
-            if($data[$param]['q'] != $qualifier) continue;
+            if($data[$param]['q'] != $qualifier){
+                $xArray[] = $date;
+                $yArray[] = '';
+                 continue;
+            }
         }
-        $xArray[] = $date;
-        $yArray[] = $data[$param]['val'];
+        if(isset($data[$param]['val'])){
+            $xArray[] = $date;
+            $yArray[] = $data[$param]['val'];
+        }
     }
     return array($xArray,$yArray);
 }
@@ -120,17 +127,17 @@ function findDiff($ahpsSite,$usgsSite,$param){
 }
 
 
-
-
 ##########
 #
 #  MAIN PROGRAM
 #
 ##########
 
+$usgsPeriod = 'P7D';
+
 $logger->log("START",PEAR_LOG_INFO);
 
-$opts = getopt('a:s:g', array());
+$opts = getoptreq('a:s:g', array());
 
 if(!isset($opts["a"])){
     $logger->log("No area defined to check! (eg: -a AK)",PEAR_LOG_WARNING);
@@ -154,13 +161,11 @@ else{
     $logger->log("Create graphs",PEAR_LOG_INFO);
 }
 
-
 /* Get the Statewide table of gages from HADS*/
 $siteInfo = getHADS_NWSLID_Lookup($state,3600);
 
-
 //Get AHPS Gage Report
-$ahpsReport = getAHPSreport(3600);
+//$ahpsReport = getAHPSreport(3600);
 
 //Get AHPS Notes
 $hydroNotes = getAHPSNotes(3600);
@@ -170,7 +175,8 @@ $jsonError = array();
 
 $logger->log(count($siteInfo['sites'])." sites in HADS table. ",PEAR_LOG_INFO);
 
-$usgs = getUSGS('P8D',$state);
+
+$usgs = getUSGS($usgsPeriod,$state);
 
 $logger->log(count($usgs)." sites in USGS 7-Day file. ",PEAR_LOG_INFO);
 
@@ -188,17 +194,21 @@ foreach($siteInfo['sites'] as $nws => $site){
     if(isset($siteCheck)){
         if($nws != $siteCheck) continue;
     }
-    $nwsNote = '';
-    $index = intval($site['usgs']);
-    $generate = false;
-    $diff = 0;
 
     $logger->log("Working on: ".$nws." - ".$site['usgs'],PEAR_LOG_DEBUG);
 
+    //Check if this is an ahps site
+    if(!isset($hydroNotes['sites'][$nws])){
+        $logger->log("$nws is not an AHPS Site",PEAR_LOG_DEBUG);
+        continue;
+    }
+
     if(!$nws) continue;
 
+    $index = intval($site['usgs']);
+    $generate = false;
+    $diff = 0;
     $i++;
-
 
     // Create a new timer instance
     $datemax = strtotime('today midnight')+24*3600;
@@ -222,6 +232,7 @@ foreach($siteInfo['sites'] as $nws => $site){
         #$jsonError['sites'][$nws][] = "No USGS data for site:".$nws;
     }
 
+    //print_r($usgs[$index]);
     $nwsNote = '';
     //Check if AHPS notes include a statement about ice
     if($ahps[$nws]['inService'] && isset($hydroNotes['sites'][$nws])){
@@ -245,13 +256,16 @@ foreach($siteInfo['sites'] as $nws => $site){
     $lastUSGS =array();
     $lastAHPS =array();
 
+
     if(isset($usgs[$index]['data'])){
         $lastUSGS = end($usgs[$index]['data']);
         reset($usgs[$index]['data']);
     }
 
     if(isset($ahps[$nws]['data'])){
-        $lastAHPS = current($ahps[$nws]['data']);
+        $datemin = key($ahps[$nws]['data']);
+        $lastAHPS = end($ahps[$nws]['data']);
+        reset($ahps[$nws]['data']);
     }
 
 
@@ -285,8 +299,8 @@ foreach($siteInfo['sites'] as $nws => $site){
         if($USGS_QR && $AHPS_QR){
             $mostRecent = end($qDiff);
             if((abs($mostRecent['diff']['percent']) > 3) && (abs($mostRecent['diff']['val']) > 3)) {
-                $logger->log("Discharge difference of ".$mostRecent['diffpercent']."% or ".$mostRecent['diff']." cfs for site ".$nws,PEAR_LOG_ERR);
-                $jsonError['sites'][$nws][] = "Discharge differnce of ".$mostRecent['diff']['percent']."% or ".$mostRecent['diff']." cfs";
+                $logger->log("Discharge difference of ".$mostRecent['diff']['percent']."% or ".$mostRecent['diff']['val']." cfs for site ".$nws,PEAR_LOG_ERR);
+                $jsonError['sites'][$nws][] = "Discharge differnce of ".$mostRecent['diff']['percent']."% or ".$mostRecent['diff']['val']." cfs";
           }
         }
     }
@@ -329,7 +343,10 @@ foreach($siteInfo['sites'] as $nws => $site){
     }
 
     if(!$USGS_HG && $AHPS_HG){
-        if($usgs[$index]['inService']){
+        if(!isset($usgs[$index])){
+            $logger->log("NWS publishing stage and USGS $index is not valid ".$nws,PEAR_LOG_ERR);
+            $jsonError['sites'][$nws][] = "NWS publishing stage and USGS $index is not valid $nws";
+        }elseif($usgs[$index]['inService']){
             $logger->log("NWS publishing stage and USGS site is not: ".$nws,PEAR_LOG_ERR);
             $jsonError['sites'][$nws][] = "NWS publishing stage and USGS is not";
         }else{
@@ -340,7 +357,7 @@ foreach($siteInfo['sites'] as $nws => $site){
 
    if($USGS_QR && !$AHPS_QR){
         if($ahps[$nws]['inService']){
-            $logger->log("USGS publishing discharge and NWS is NOT for site: ".$nws,PEAR_LOG_ERR);
+            $logger->log("USGS publishing discharge and NWS is NOT in service: ".$nws,PEAR_LOG_ERR);
             $jsonError['sites'][$nws][] = "USGS publishing discharge and NWS is NOT";
         }else{
             $logger->log("USGS publishing discharge and NWS site is not in service: ".$nws,PEAR_LOG_ERR);
@@ -349,7 +366,10 @@ foreach($siteInfo['sites'] as $nws => $site){
     }
 
     if(!$USGS_QR && $AHPS_QR){
-        if($usgs[$index]['inService']){
+        if(!isset($usgs[$index])){
+            $logger->log("NWS publishing discharge and USGS $index is not valid ".$nws,PEAR_LOG_ERR);
+            $jsonError['sites'][$nws][] = "NWS publishing dischare and USGS $index is not valid $nws";
+        }elseif($usgs[$index]['inService']){
             $logger->log("NWS publishing dicharge and USGS site is not: ".$nws,PEAR_LOG_ERR);
             $jsonError['sites'][$nws][] = "NWS publishing discharge and USGS is not";
         }else{
@@ -360,9 +380,7 @@ foreach($siteInfo['sites'] as $nws => $site){
 
 
     if($makeGraphs){
-        $lm=100;
-        $rm=50;
-        $w=800;
+
         //Delete all of the older PNG files
         $files = glob(IMAGE_OUTPUT."/*".$site['usgs']."*.png");
         foreach($files as $file) {
@@ -370,8 +388,8 @@ foreach($siteInfo['sites'] as $nws => $site){
         }
 
         //Generage the graphs using JpGraph library
-        $graph = new Graph($w,500);
-        $graph->SetMargin($lm,$rm,40,10);
+        $graph = new Graph(800,500);
+        $graph->SetMargin(100,50,40,10);
         if($USGS_QR || $AHPS_QR){
             $graph->SetScale('datlin',0,0,$datemin,$datemax);
         }
@@ -448,10 +466,11 @@ foreach($siteInfo['sites'] as $nws => $site){
 
 
         //IF USGS IS PUBLISHING DISCHARGE ADD TO GRAPH
-        if($USGS_QR){
+        if(isset($usgs[$index]['qualifiers']['QR'])){
             foreach($usgs[$index]['qualifiers']['QR'] as $qualifier){
 
                 $graphData = XYarrays($usgs[$index]['data'],'QR',$qualifier);
+
                 if(count($graphData[0]) > 0){
                     if($qualifier == 'P'){
                         $line = new LinePlot($graphData[1],$graphData[0]);
@@ -505,6 +524,7 @@ foreach($siteInfo['sites'] as $nws => $site){
 
 file_put_contents(IMAGE_OUTPUT.'ahpsErrors.json',json_encode($jsonError));
 $logger->log("Completed comparing $i site(s)! ",PEAR_LOG_INFO);
+$logger->log("Peak memory: ".memory_get_peak_usage(true),PEAR_LOG_INFO);
 $logger->log("END",PEAR_LOG_INFO);
 
 

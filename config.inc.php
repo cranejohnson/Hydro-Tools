@@ -47,9 +47,7 @@ define("URL_AHPSXML","http://water.weather.gov/ahps2/hydrograph_to_xml.php");
 #Credentials if required in a private directory
 define("CREDENTIALS_FILE",PROJECT_ROOT."private/login.php");
 
-
 include_once(CREDENTIALS_FILE);
-
 #Credentials File contents:
 #define("DB_HOST","localhost");
 #define("DB_USER", "username");

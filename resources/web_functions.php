@@ -422,7 +422,7 @@ function getAhpsData($siteid){
         $ahps[$siteid]['data'][strtotime($value->valid)]['HG']['val'] = floatval($value->primary);
     }
 
-
+    if(isset($ahps[$siteid]['data'])) ksort($ahps[$siteid]['data']);
     return $ahps;
 }
 
@@ -437,7 +437,7 @@ function getAhpsData($siteid){
  * @return array Associative array of AHPS Report data for each site.
  * @access public
  */
-function getAHPSreport($age = 86400){
+function getAHPSreport($age = 86400,$filter = array('state'=>'*')){
 
     $url = URL_AHPSREPORT;
     $url .= "?type=csv";
