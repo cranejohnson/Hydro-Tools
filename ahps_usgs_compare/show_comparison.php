@@ -40,7 +40,7 @@ foreach($ignore_errors as $site){
 }
 
 
-$errorsJson = json_decode(file_get_contents('ahpsErrors.json'),true);
+$errorsJson = json_decode(file_get_contents('ahps_usgs_graphs/ahpsErrors.json'),true);
 
 
 echo "<br><br>Latest Gage-Compare Log File Information<br>";
@@ -64,7 +64,7 @@ Jump to a site: <input type="text" onBlur="goTo($(this).val());" ><i> Enter USGS
 <?
 
 
-$fileList = glob("*.png");
+$fileList = glob("ahps_usgs_graphs/*.png");
 echo '<table border = "1">';
 foreach ($fileList as $file){
 	$ids = explode('_',basename($file));

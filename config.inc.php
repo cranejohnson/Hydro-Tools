@@ -56,6 +56,15 @@ include_once(CREDENTIALS_FILE);
 #define("DB_PASSWORD","password");
 #define("DB_DATABASE","database");
 
+//Setup Output Directory
+if (!file_exists(CACHE_DIR)) {
+    mkdir(CACHE_DIR, 0777, true);
+}
+
+//Setup Output Directory
+if (!file_exists(LOG_DIRECTORY)) {
+    mkdir(LOG_DIRECTORY, 0777, true);
+}
 
 
 
