@@ -1,0 +1,6 @@
+private/*
+cache/*
+logs/*
+tmp/*
+ahps_usgs_compare/*/*.png
+*.json
