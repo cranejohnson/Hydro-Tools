@@ -212,7 +212,7 @@ foreach($siteInfo['sites'] as $nws => $site){
 
     // Create a new timer instance
     $datemax = strtotime('today midnight')+24*3600;
-    $datemin = $datemax-8*24*3600;
+    $datemin = $datemax-6*24*3600;
     $created = date("F j, Y, g:i a");
 
 
