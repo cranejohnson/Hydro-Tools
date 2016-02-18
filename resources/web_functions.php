@@ -428,6 +428,52 @@ function getAhpsData($siteid){
 
 
 /**
+ * Reads in a data file and filters on a column (i.e. 'state' = 'AK')
+ *
+ * @param string $filename filename or url to read
+ * @param string $delim deliminator of data values, typically ','
+ * @param array  $filter Array that contains 'column' and 'value' to filter on
+ * @return array Returns an array of lines from the original file that match the filter
+ * @access public
+ */
+function read_file_filter($filename,$delim = ',',$filter = null){
+    $fileContents = array();
+    $filterCol = null;
+    $handle = fopen($filename, 'r');
+    if ($handle) {
+
+        $line = fgets($handle);
+        $fileContents[] = trim($line);
+        $headers = str_getcsv($line,$delim,'"');
+        //Determine which column is the filter column
+        if(!is_null($filter)){
+            for($i=0;$i<count($headers);$i++){
+                if(strtoupper($filter['column']) == strtoupper($headers[$i])){
+                    $filterCol = $i;
+                    continue;
+                }
+            }
+        }
+        //Read the rest of the file and include lines that match
+        while (!feof($handle)) {
+            $line = fgets($handle);
+            $data = str_getcsv($line,$delim,'"');
+            if(is_null($filter)) {
+                $fileContents[] = trim($line);
+                continue;
+            }
+            if(strtoupper($data[$filterCol]) == strtoupper($filter['value'])){
+                $fileContents[] = trim($line);
+                continue;
+            }
+        }
+    }
+    fclose($handle);
+    //Return an array of lines
+    return $fileContents;
+}
+
+/**
  * Get AHPS Report data.
  *
  *
@@ -437,14 +483,18 @@ function getAhpsData($siteid){
  * @return array Associative array of AHPS Report data for each site.
  * @access public
  */
-function getAHPSreport($age = 86400,$filter = array('state'=>'*')){
+function getAHPSreport($age = 86400,$filter = null){
 
     $url = URL_AHPSREPORT;
     $url .= "?type=csv";
     global $logger;  //Global pear logger class
 
-
-    $id = 'AHPS_stage_flow';
+    if(isset($filter)){
+        $id = 'AHPS_stage_flow_'.$filter['column']."_".$filter['value'];
+    }
+    else{
+        $id = 'AHPS_stage_flow';
+    }
     $options = array(
         'cacheDir' => CACHE_DIR,
         'lifeTime' => $age,
@@ -464,38 +514,37 @@ function getAHPSreport($age = 86400,$filter = array('state'=>'*')){
     }
     else{
         $start = time();
-        $textdata = file_get_contents($url);
-        if ($textdata === false) {
+        $textData = read_file_filter($url,',',$filter);
+        if (count($textdata) == 0) {
            $logger->log("Failed to get AHPS report from $url",PEAR_LOG_ERR);
         }
         else{
             $resultArray = array();
             $downloadTime = time()-$start;
-            $siteInfo = array_slice(explode("\n", trim($textdata)), 0);
-            $parts = str_getcsv($siteInfo[0],",",'"');
+            $parts = str_getcsv($textData[0],",",'"');
             foreach($parts as $p){
-            $resultArray['columns'][] = preg_replace("/[^A-Za-z0-9]/",'',$p);
-        }
-
-        array_shift($siteInfo);
-
-        foreach($siteInfo as $site){
-            $parts = str_getcsv($site,",",'"');
-            $nws = strtoupper($parts[3]);
-            $i=0;
-            foreach($resultArray['columns'] as $col){
-                $resultArray['sites'][$nws][$col] = $parts[$i];
-                $i++;
+                $resultArray['columns'][] = preg_replace("/[^A-Za-z0-9]/",'',$p);
             }
-            $resultArray['sites'][$nws]['name'] = $parts[2]." ".$parts[1]." ".$parts[0];
-        }
 
-        $resultArray['columns'][] = 'name';
-        $logger->log("AHPS report in $downloadTime seconds.",PEAR_LOG_INFO);
-        $resultArray['outOfService'] = $numOut;
-        $timestamp = date('Y-m-d H:i');
-        $resultArray['cached'] = $timestamp;
-        $Cache_Lite->save(json_encode($resultArray),$id);
+            array_shift($textData);
+
+            foreach($textData as $site){
+                $parts = str_getcsv($site,",",'"');
+                $nws = strtoupper($parts[3]);
+                $i=0;
+                foreach($resultArray['columns'] as $col){
+                    $resultArray['sites'][$nws][$col] = $parts[$i];
+                    $i++;
+                }
+                $resultArray['sites'][$nws]['name'] = $parts[2]." ".$parts[1]." ".$parts[0];
+            }
+
+            $resultArray['columns'][] = 'name';
+            $logger->log("AHPS report in $downloadTime seconds.",PEAR_LOG_INFO);
+            $resultArray['outOfService'] = $numOut;
+            $timestamp = date('Y-m-d H:i');
+            $resultArray['cached'] = $timestamp;
+            $Cache_Lite->save(json_encode($resultArray),$id);
         }
     }
 

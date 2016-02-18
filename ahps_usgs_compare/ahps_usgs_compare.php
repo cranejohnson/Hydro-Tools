@@ -146,6 +146,11 @@ if(!isset($opts["a"])){
 
 $state = strtoupper($opts["a"]);
 
+$filter = array(
+    'column' => 'state',
+    'value'  => $state
+    );
+
 
 if(isset($opts["s"])){
     $siteCheck = strtoupper($opts["s"]);
@@ -165,7 +170,7 @@ else{
 $siteInfo = getHADS_NWSLID_Lookup($state,3600);
 
 //Get AHPS Gage Report
-//$ahpsReport = getAHPSreport(3600);
+$ahpsReport = getAHPSreport(0,$filter);
 
 //Get AHPS Notes
 $hydroNotes = getAHPSNotes(3600);
@@ -174,7 +179,6 @@ $hydroNotes = getAHPSNotes(3600);
 $jsonError = array();
 
 $logger->log(count($siteInfo['sites'])." sites in HADS table. ",PEAR_LOG_INFO);
-
 
 $usgs = getUSGS($usgsPeriod,$state);
 
@@ -198,7 +202,8 @@ foreach($siteInfo['sites'] as $nws => $site){
     $logger->log("Working on: ".$nws." - ".$site['usgs'],PEAR_LOG_DEBUG);
 
     //Check if this is an ahps site
-    if(!isset($hydroNotes['sites'][$nws])){
+
+    if(isset($hydroNotes['sites'][$nws]) == false && isset($ahpsReport['sites'][$nws]) == false){
         $logger->log("$nws is not an AHPS Site",PEAR_LOG_DEBUG);
         continue;
     }

@@ -2,5 +2,7 @@ private/*
 cache/*
 logs/*
 tmp/*
+web/*
 ahps_usgs_compare/*/*.png
 *.json
+

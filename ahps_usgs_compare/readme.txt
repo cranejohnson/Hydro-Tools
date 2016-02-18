@@ -1,8 +1,7 @@
 README
 
 This script is a simple php script that compares data from the USGS NWIS system with
-data posted by the NWS on AHPS. Sites within each state are determined by using the HADS
-NWS/USGS lookup tables.
+data posted by the NWS on AHPS. Sites within each state are determined by using the HADS NWS/USGS lookup tables.
 
 To view results open "show_comparison.php" in a web browser.
 
