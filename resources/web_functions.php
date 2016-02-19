@@ -345,7 +345,8 @@ function getUSGS_siteInfo($url){
         $values = explode("\t",$line);
         $i=0;
         foreach($columns as $col){
-            $data[$col] = $values[$i];
+            if(isset($values[$i]))
+                $data[$col] = $values[$i];
             $i++;
         }
         $rdbArray[$values[$usgsCol]] = $data;
