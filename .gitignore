@@ -1,3 +1,4 @@
+breakupDB/*.json
 private/*
 cache/*
 logs/*
@@ -6,3 +7,4 @@ web/*
 ahps_usgs_compare/*/*.png
 *.json
 TO_LDAD/*
+usgs_meta_check/*.html

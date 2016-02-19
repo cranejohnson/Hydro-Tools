@@ -143,9 +143,9 @@ foreach($stations as $cdnId => $name){
         $tempData = array();
         $xmlFile = $cdnId.'-AUTO-swob.xml';
 
-        $cdnXML = file_get_contents($latest_dir.$xmlFile);
+        $cdnXML = @file_get_contents($latest_dir.$xmlFile);
         if(!$cdnXML) {
-            $logger->log("Failed to get data for $cdnId from $xmlFile",PEAR_LOG_ERR);
+            $logger->log("Failed to get data for $cdnId from $xmlFile",PEAR_LOG_WARNING);
             continue;
         }
         $xml = new SimpleXMLElement($cdnXML);
@@ -216,7 +216,6 @@ if($numLines == 0){
 
 }
 else{
-    echo $shefFile;
     file_put_contents(TO_LDAD.$fileName, $shefFile);
     $logger->log("$numLines lines encoded into shef file.",PEAR_LOG_INFO);
 }

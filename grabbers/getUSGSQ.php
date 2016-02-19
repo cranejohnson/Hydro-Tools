@@ -23,8 +23,6 @@ require_once('../config.inc.php');
 require_once(RESOURCES_DIRECTORY."web_functions.php");
 
 ini_set('memory_limit', '512M');
-set_time_limit(300);
-date_default_timezone_set('UTC');
 
 //Pear log package
 require_once 'Log.php';
