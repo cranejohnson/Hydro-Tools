@@ -5,9 +5,6 @@
  * to shef messages.
  *
  *
- *
-
- *
  * @package get_cdn
  * @author Crane Johnson <benjamin.johnson@noaa.gov>
  * @version 0.1

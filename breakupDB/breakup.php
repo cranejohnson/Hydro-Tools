@@ -31,20 +31,6 @@ else{
     $end = date('Y',time());
 }
 
-$default = '';
-
-
-
-#if(!($location = sanitize($_GET['riverOption']))) $location = 'Select a location';
-
-// //Get current location so that form input can be set
-// if(!($_GET['riverOption_'])){
-//     $default = '"Default"';
-// }
-// else{
-//     $default = '["'.$_GET['riverOption_'].'","'.$_GET['riverOption__'].'","'.$_GET['riverOption___'].'"]';
-// }
-//
 
 function formatDate($date){
 	if($date){
@@ -138,9 +124,9 @@ $result = $mysqli->query($query) or die($mysqli->error);
 #$siteData[row['siteID']]['data'] = array();
 while($row = $result->fetch_array()){
 
-     $siteData[$row['siteID']]['name'] = $row['river']." ".$row['atnr']." ".$row['location'];
-     $siteData[$row['siteID']]['river'] = $row['river'];
-     $siteData[$row['siteID']]['location'] = $row['location'];
+    $siteData[$row['siteID']]['name'] = $row['river']." ".$row['atnr']." ".$row['location'];
+    $siteData[$row['siteID']]['river'] = $row['river'];
+    $siteData[$row['siteID']]['location'] = $row['location'];
     $siteData[$row['siteID']]['data'][$row['year']]['firstboat']= formatDate($row['firstboat']);
     $siteData[$row['siteID']]['data'][$row['year']]['unsafeman']= formatDate($row['unsafeman']);
     $siteData[$row['siteID']]['data'][$row['year']]['unsafeveh']= formatDate($row['unsafeveh']);
@@ -149,15 +135,15 @@ while($row = $result->fetch_array()){
     $siteData[$row['siteID']]['data'][$row['year']]['remarks']=   $row['remarks'];
     $siteData[$row['siteID']]['data'][$row['year']]['jday'] = date('z',strtotime($row['breakup']))+1;
     $siteData[$row['siteID']]['data'][$row['year']]['breakup'] = $row['breakup'];
-    if(isset($row['jday'])){
-        $siteData[row['siteID']]['hdata'][]= array((int)$row['year'],(int)$row['jday']);
+    if(isset($row['breakup'])){
+        $siteData[$row['siteID']]['hdata'][]= array((int)$row['year'],(int)(1+date('z',strtotime($row['breakup']))));
     }
 }
 #}
 
 file_put_contents('breakupData.json',json_encode($siteData));
 
-exit;
+get_all_avg_dates(1980,2016,$mysqli);
 
 function get_all_avg_dates($from,$to,$mysqli){
     echo"<h2>Temp Table 1980-2015</h2>";

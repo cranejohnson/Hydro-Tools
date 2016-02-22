@@ -4,40 +4,23 @@
 
    <div align='left'>
    <!-- <link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css"> -->
+
     <script src="//code.jquery.com/jquery-1.9.1.js"></script>
     <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
-    <script src="../../javascript/highcharts/highcharts.js"></script>
-    <script src="../../javascript/highcharts/modules/exporting.js"></script>
-    <script src="../../javascript/highcharts/highcharts-more.js"></script>
-    <script src="../../javascript/jquery.optionTree.js"></script>
-    <script src="../../javascript/simple_statistics.js"></script>
-    <script src= "../../javascript/moment.js"></script>
-    <script src= "../../javascript/sorttable.js"></script>
-    <script src="../../javascript/highcharts_reg.js"> </script>
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/heatmap.js"></script>
+    <script src="https://code.highcharts.com/highcharts-more.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+    <script src="http://highcharts.github.io/export-csv/export-csv.js"></script>
+    <script src="../resources/js/jquery.optionTree.js"></script>
+    <script src="../resources/js/simple_statistics.js"></script>
+    <script src= "https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.2/moment.js"></script>
+    <script src= "../resources/js/sorttable.js"></script>
+    <script src="../resources/js/highcharts_reg.js"> </script>
 
 
 
     <script>
-
-    function loadJSON(callback) {
-        var xobj = new XMLHttpRequest();
-        xobj.overrideMimeType("application/json");
-        xobj.open('GET', 'breakupMenu.json', true); // Replace 'my_data' with the path to your file
-        xobj.onreadystatechange = function () {
-            if (xobj.readyState == 4 && xobj.status == "200") {
-                // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
-                callback(xobj.responseText);
-            }
-        };
-        xobj.send(null);
-     }
-
-    function init() {
-        loadJSON(function(response) {
-        // Parse JSON string into object
-        var option_tree = JSON.parse(response);
-        });
-    }
 
 	function getStats(data,ss) {
 	 	if (typeof data === 'undefined'){
@@ -93,7 +76,7 @@
 		}
 	}
 
-	function updatePage(data){
+    function updatePage(data){
 		$('#start').html(data['startYear']);
 		$('#end').html(data['endYear']);
 		if(data['statsSeries'] && data['statsSeries'].length){
@@ -106,31 +89,34 @@
 
     }
 
-      $(function() {
+   $(function() {
+        var options = {
+                choose: function(level) {
+                    switch(level){
+                        case 0:
+                            text = "Choose Region";
+                            break;
+                         case 1:
+                            text = "Choose River";
+                            break;
+                         case 2:
+                            text = "Choose Location";
+                            break;
+                        }
+                    return text;
+                },
+        }; // value for default option (include field name)
+        $.getJSON('breakupData.json', function(data) { // initialize the tree by loading the file first
+            allData = data;
+        });
 
-      var option_tree = <?php echo json_encode($option_tree); ?>
-
-
-      var options = {
-      				preselect: {'riverOption': <?php echo $default; ?>},
-      				choose: function(level) {
-      					var text = 'Choose...';
-      					switch(level){
-      						case 0:
-      						 	text = "Choose Region";
-      						 	break;
-      						 case 1:
-      						 	text = "Choose River";
-     						 	break;
-      						 case 2:
-      						 	text = "Choose Location";
-      						 	break;
-      						}
-      					return text;
-            	},
-                     set_value_on: 'leaf'}; // value for default option (include field name)
-		  $('input[name=riverOption]').optionTree(option_tree,options);
-      });
+        $.getJSON('breakupMenu.json', function(tree) { // initialize the tree by loading the file first
+	        $('input[name=riverOption]').optionTree(tree,options).change(function(){
+	            site = this.value.match(/ID:([0-9]*)/)[1];
+	            loadSite(site);
+	         });
+        });
+    });
 
 
 
@@ -159,8 +145,8 @@
     	var xMean = 0;
     	var sumXi = 0;
     	var tScore = 0;
-		var slope = ss.linear_regression().data(data).m().toFixed(2);
-		var line = ss.linear_regression().data(data).line();
+        var slope = ss.linear_regression().data(data).m().toFixed(2);
+    	var line = ss.linear_regression().data(data).line();
 		for (i = 0; i < data.length; i++) {
 			xArray.push(data[i][0]);
 		}
@@ -181,40 +167,43 @@
 	}
 
 
+    function loadSite(site){
+        breakupData['data'] = allData[site]['hdata'];
+        breakupData['name'] = allData[site]['name'];
+        breakupData['startYear'] = 1980;
+        breakupData['endYear'] = 2015;
+        breakupData['statsSeries'] = new Array();
+        breakupData['stats'] = new Array();
+        breakupData['outliers'] = new Array();
+        breakupData['statsSeries'] = getStatsSeries(breakupData['data'],breakupData['startYear'],breakupData['endYear']);
+        if(breakupData['statsSeries'] && breakupData['statsSeries'].length) breakupData['stats'] = new Array(getStats(breakupData['statsSeries'],ss));
 
-    </script>
-    <script>
+        if ('undefined' !== typeof breakupData['statsSeries']) {
+            breakupData['slope'] = ss.linear_regression().data(breakupData['statsSeries']).m().toFixed(2);
+        }
+        sigTrend = testSig(breakupData['statsSeries'],ss);
+
+        if(!sigTrend) {
+            breakupData['plotStyle'] = 'Dot';
+        }else{
+            breakupData['plotStyle']= 'Solid';
+        }
+        console.log(breakupData['hdata']);
+        createChart();
+        updatePage(breakupData);
+        }
+
+
+
     //Initialize variables
+    var allData = new Array();
+    var site = null;
     var first_line = true;
     var sigTrend = false;
     var plotStyle = 'Solid';
     var xMax = new Date().getFullYear()+10;
     var breakupData = new Array();
-    breakupData['data'] = <?php echo json_encode( $siteData[$id]['hdata']); ?>;
-    breakupData['name'] = '<?php echo addslashes($siteData[$id]['name']); ?>';
-    breakupData['startYear'] = 1980;
-    breakupData['endYear'] = 2015;
-    breakupData['statsSeries'] = new Array();
-    breakupData['stats'] = new Array();
-    breakupData['outliers'] = new Array();
- 	breakupData['statsSeries'] = getStatsSeries(breakupData['data'],breakupData['startYear'],breakupData['endYear']);
-    if(breakupData['statsSeries'] && breakupData['statsSeries'].length) breakupData['stats'] = new Array(getStats(breakupData['statsSeries'],ss));
 
-    var slope = ss.linear_regression().data(breakupData['statsSeries']).m().toFixed(2);
-    sigTrend = testSig(breakupData['statsSeries'],ss);
-    if(!sigTrend) {
-        plotStyle = 'Dot';
-    }else{
-        plotStyle = 'Solid';
-    }
-
-
-
-    $( document ).ready(function() {
-    	if(breakupData['data']  && breakupData['data'].length) createChart();
-		updatePage(breakupData);
-
-	});
 
 	function createChart() {
 		chart = new Highcharts.Chart({
@@ -298,12 +287,14 @@
 							breakupData['statsSeries'] = getStatsSeries(breakupData['data'],breakupData['startYear'],breakupData['endYear']);
 							breakupData['stats'] = Array(getStats(breakupData['statsSeries'],ss));
 							updatePage(breakupData);
-							slope = ss.linear_regression().data(breakupData['statsSeries']).m().toFixed(2);
+							if ('undefined' !== typeof breakupData['statsSeries']) {
+                                breakupData['slope'] = ss.linear_regression().data(breakupData['statsSeries']).m().toFixed(2);
+                            }
 					    	sigTrend = testSig(breakupData['statsSeries'],ss);
                             if(!sigTrend) {
-                                plotStyle = 'Dot';
+                                breakupData['plotStyle'] = 'Dot';
                             }else{
-                                plotStyle = 'Solid';
+                                breakupData['plotStyle'] = 'Solid';
                             }
 
 							createChart();
@@ -348,12 +339,12 @@
 								breakupData['statsSeries'] = getStatsSeries(breakupData['data'],breakupData['startYear'],breakupData['endYear']);
 								breakupData['stats'] = Array(getStats(breakupData['statsSeries'],ss));
 								updatePage(breakupData);
-								slope = ss.linear_regression().data(breakupData['statsSeries']).m().toFixed(2);
+								breakupData['slope'] = ss.linear_regression().data(breakupData['statsSeries']).m().toFixed(2);
 								sigTrend = testSig(breakupData['statsSeries'],ss);
                                 if(!sigTrend) {
-                                    plotStyle = 'Dot';
+                                    breakupData['plotStyle'] = 'Dot';
                                 }else{
-                                    plotStyle = 'Solid';
+                                    breakupData['plotStyle'] = 'Solid';
                                 }
 
 								createChart();
@@ -382,10 +373,10 @@
 				name: 'Shaded Area Tend',
 				regressionSettings: {
 					type: 'linear',
-                    dashStyle: plotStyle,
+                    dashStyle: breakupData['plotStyle'],
 					visible: true,
 					color:  'green',
-					label: 'Shaded Area Trend (s='+slope+')'
+					label: 'Shaded Area Trend (s='+breakupData['slope']+')'
 				},
 				data: breakupData['statsSeries'],
 				type: 'scatter',
@@ -438,12 +429,9 @@
 	<li> Then select a location</li>
     </ol>
 
-    <form id="riverform" method="get" action="<?php echo $_SERVER['PHP_SELF']; ?>">
-      <input type='text' name='riverOption' size="50" value="<?php echo $location;?>" readonly>
-      <input id="submit_button" type="submit" value="Submit">
-    </form>
+      <input type='text' name='riverOption' size="50" value="" readonly>
 
-    <?php if ((count($riverList) == 1) ){?>
+
 
     <table>
       <tr>
@@ -457,16 +445,13 @@
           <i>Click on the chart to select a different date range.</i><br>
           <table id="hor-minimalist-b"><thead><tr><th width = "50" colspan = "2">Shaded Region<br>Statistics</th></tr></thead>
             <tbody>
-              <?php
-                echo"<tr><td>Start Year</td><td><div id = 'start'></div></td></tr>";
-                echo"<tr><td>End Year</td><td><div id = 'end'></div></td></tr>";
-                echo"<tr><td>Number</td><td><div id = 'numYears'></div></td></tr>";
-                echo"<tr><td>Min.</td><td><div id = 'min'></div></td></tr>";
-                echo"<tr><td>Avg.</td><td><div id = 'mean'></div></td></tr>";
-                echo"<tr><td>Max.</td><td><div id = 'max'></div></td></tr>";
-                echo"<tr><td>Std. Dev.</td><td><div id = 'stddev'></div> days</td></tr>";
-
-                ?>
+                <tr><td>Start Year</td><td><div id = 'start'></div></td></tr>
+                <tr><td>End Year</td><td><div id = 'end'></div></td></tr>
+                <tr><td>Number</td><td><div id = 'numYears'></div></td></tr>
+                <tr><td>Min.</td><td><div id = 'min'></div></td></tr>
+                <tr><td>Avg.</td><td><div id = 'mean'></div></td></tr>
+                <tr><td>Max.</td><td><div id = 'max'></div></td></tr>
+                <tr><td>Std. Dev.</td><td><div id = 'stddev'></div> days</td></tr>
             </tbody>
           </table>
 
@@ -474,8 +459,6 @@
         </td>
       </tr>
     </table>
-    <?php } ?>
-    <?php if ((count($riverList) >= 1) ){?>
 
     <h2>Breakup Dates Table</h2>
     <table id="datatable" class="sortable">
@@ -484,32 +467,27 @@
       </thead>
       <tbody>
         <?php
-          foreach($riverList as $id){
-              $river = $siteData[$id]['river'];
-              $location = $siteData[$id]['location'];
-			  foreach($siteData[$id]['data'] as $year=>$sdata){
-
-					echo "<tr><td>".$river."</td>";
-					echo "<td>".$location."</td>";
-					echo "<td>$year</td><td>".$sdata['breakup']."</td>";
-					echo "<td>".$sdata['icemoved']."</td>";
-					echo "<td>".$sdata['firstboat']."</td>";
-					echo "<td>".$sdata['unsafeman']."</td>";
-					echo "<td>".$sdata['unsafeveh']."</td>";
-					echo "<td>".$sdata['typeveh']."</td>";
-					echo "<td>".$sdata['lastice']."</td>";
-					echo "<td>".$sdata['remarks']."</td>";
-					echo "</tr>";
-			  }
-			}
+ //          foreach($riverList as $id){
+//               $river = $siteData[$id]['river'];
+//               $location = $siteData[$id]['location'];
+// 			  foreach($siteData[$id]['data'] as $year=>$sdata){
+//
+// 					echo "<tr><td>".$river."</td>";
+// 					echo "<td>".$location."</td>";
+// 					echo "<td>$year</td><td>".$sdata['breakup']."</td>";
+// 					echo "<td>".$sdata['icemoved']."</td>";
+// 					echo "<td>".$sdata['firstboat']."</td>";
+// 					echo "<td>".$sdata['unsafeman']."</td>";
+// 					echo "<td>".$sdata['unsafeveh']."</td>";
+// 					echo "<td>".$sdata['typeveh']."</td>";
+// 					echo "<td>".$sdata['lastice']."</td>";
+// 					echo "<td>".$sdata['remarks']."</td>";
+// 					echo "</tr>";
+// 			  }
+// 			}
           ?>
       </tbody>
     </table>
    </div>
-<?php
 
-}
-
-
- ?>
 
