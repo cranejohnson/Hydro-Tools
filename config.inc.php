@@ -20,7 +20,7 @@ date_default_timezone_set('UTC');
 //    message     VARCHAR(200),
 //    PRIMARY KEY (id)
 // );
-define("LOG_TYPE","FILE");
+define("LOG_TYPE","DB");
 
 
 //Constants for Paths
