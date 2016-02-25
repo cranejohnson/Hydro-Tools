@@ -2,8 +2,8 @@
 /**
  * Php script to download and shef encode USGS discharge data.
  *
- * Example usage 'php getUSGSQ.php AK 1 RZ'
- *       Get data for Alaska for 1 day and set typesource as RZ
+ * Example usage ' php getUSGSQ.php AK PT2H RZ'
+ *       Get data for Alaska the last 2 hours and set typesource as RZ
  *
  *
  * @package getUSGS
@@ -13,6 +13,9 @@
  * @param string period of data to grab see 'https://en.wikipedia.org/wiki/ISO_8601#Durations' for definitions
  */
 
+
+/* Include config file for paths etc..... */
+chdir(dirname(__FILE__));
 
 /* Include config file for paths etc..... */
 require_once('../config.inc.php');

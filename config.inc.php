@@ -23,7 +23,6 @@ date_default_timezone_set('UTC');
 define("LOG_TYPE","FILE");
 
 
-
 //Constants for Paths
 //Assume the config file is always in the project root
 define("PROJECT_ROOT",dirname(__FILE__).'/');
@@ -45,7 +44,7 @@ define("URL_USGSINSTANTVAL","http://waterservices.usgs.gov/nwis/iv/");
 define("URL_AHPSXML","http://water.weather.gov/ahps2/hydrograph_to_xml.php");
 
 #Credentials if required in a private directory
-define("CREDENTIALS_FILE",PROJECT_ROOT."private/login.php");
+define("CREDENTIALS_FILE",PROJECT_ROOT."login.php");
 
 include_once(CREDENTIALS_FILE);
 #Credentials File contents:

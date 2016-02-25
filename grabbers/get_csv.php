@@ -12,6 +12,7 @@
  * @version 0.1
  */
 
+chdir(dirname(__FILE__));
 
 /* Include config file for paths etc..... */
 require_once('../config.inc.php');
@@ -360,10 +361,9 @@ $fileName = "sheffile.hd.csv.".date('ymdHi');
 
 
 /* Write the file to the local temporary location */
-file_put_contents(TEMP_PATH.$fileName, $shefFile);
+file_put_contents(TEMP_DIRECTORY.$fileName, $shefFile);
 
 if($numLines == 0){
-    echo "No Shef Data\n";
 	$logger->log("No sites to ingest into AWIPS.",PEAR_LOG_INFO);
 
 }
