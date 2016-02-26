@@ -5,6 +5,8 @@
  * Example usage ' php getUSGSQ.php AK PT2H RZ'
  *       Get data for Alaska the last 2 hours and set typesource as RZ
  *
+ * The lastUpdate state is stored in a local file getUSGSQ.state 
+ *
  *
  * @package getUSGS
  * @author Crane Johnson <benjamin.johnson@noaa.gov>
@@ -70,8 +72,6 @@ if(LOG_TYPE == 'NULL'){
 }
 
 
-
-
 /* Get the Statewide table of gages from HADS*/
 $siteInfo = getHADS_NWSLID_Lookup('ALL',3600);
 
@@ -79,32 +79,50 @@ $siteInfo = getHADS_NWSLID_Lookup('ALL',3600);
 /* Develop a lookup table between the USGS id and NWSLID */
 
 $lookup = array();
+
 foreach($siteInfo['sites'] as $nwslid=>$site){
     $lookup[$site['usgs']] = $nwslid;
     }
 
-if(strlen($argv[1]) == 2){
-    //Location is a state
-    $location = $argv[1];
-}
-elseif(strlen($argv[1]) == 5){
-    //Location is an NWSLID
-    $nwslid = $argv[1];
-    $location = array_search($nwslid,$lookup); // Look up the usgs id based on the NWSLID
+
+//Handle the command line arguments 
+$opts = getoptreq('a:p:t:f', array());
+
+$period = strtoupper($opts["p"]);
+
+if(!isset($opts["a"])){
+    $logger->log("No area defined to check! (eg: -a AK)",PEAR_LOG_WARNING);
+    exit;
 }
 else{
-    $logger->log("A State or NWSLID was not specified",PEAR_LOG_ERR);
+    if(strlen($opts["a"]) == 2){
+        $location = strtoupper($opts["a"]);
+    }
+    elseif(strlen($opts["a"]) == 5){
+        //Location is an NWSLID
+        $nwslid = strtoupper($opts["a"]);
+        $location = array_search($nwslid,$lookup); // Look up the usgs id based on the NWSLID
+    }
+    else{
+        $logger->log("A State or NWSLID was not specified",PEAR_LOG_ERR);
+        exit;
+    }    
 }
 
+if(isset($opts["f"])){
+    $force = true;
+}
+else{   
+    $force = false;
+}    
 
-$period = $argv[2];
-
-if(isset($argv[3])) {
-    $typesource = $argv[3];
+if(!isset($opts["t"])){
+   $typesource = 'RZ';
 }
 else{
-    $typesource = 'RZ';
-}
+   $typesource = strtoupper($opts["t"]);
+}   
+
 
 $fileName = "USGSdischarge.".date('ymdHi');
 
@@ -119,7 +137,8 @@ if(!$location){
 
 $usgs = getUSGS($period,$location);
 
-
+$lastUpdate = array();
+$lastUpdate = json_decode(file_get_contents('getUSGSQ.state'),true);
 
 
 #.AR BGDA2 150320 Z DH2129/DC1503202129/VBIRZZ 7.53/
@@ -144,6 +163,20 @@ foreach($usgs as $key => $value){
         $dc = date('\D\CymdHi',time());
         $obstime = date('ymd \Z \D\HHi',$datekey);
 
+        //Check if this data is newer than the last update
+       
+        if(isset($lastUpdate[$siteid])){
+            if($datekey <= strtotime($lastUpdate[$siteid])){
+                if(!$force)continue;
+            }
+            else{
+                $lastUpdate[$siteid] = date('c',$datekey);
+            }
+        }
+        else{
+            $lastUpdate[$siteid] = date('c',$datekey); 
+        }
+        
         if(array_key_exists('QR',$data)){
 
             if(floatval($data['QR']['val']) == -9999) {
@@ -172,7 +205,9 @@ $logger->log("$linesInShef lines in the USGS discharge shef file.",PEAR_LOG_INFO
 if (!file_exists(TO_LDAD)) {
     mkdir(TO_LDAD, 0777, true);
 }
-file_put_contents(TO_LDAD.$fileName, $shefFile);
+
+if ($linesInShef) file_put_contents(TO_LDAD.$fileName, $shefFile);
+file_put_contents('getUSGSQ.state',json_encode($lastUpdate));
 $logger->log("Complete",PEAR_LOG_INFO);
 
 ?>
