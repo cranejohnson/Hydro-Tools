@@ -226,19 +226,26 @@ function getUSGS($period,$location){
     $url .= "?format=waterml,1.1";
     $url .= "&period=$period&parameterCd=00060,00065&siteStatus=active";
 
+
+
     global $logger;  //Global pear logger class
+
 
     $usgs = array();
 
     if(strlen($location) == 2){
         $url .=  "&stateCd=$location";
     }
-    elseif(is_numeric($location)){
-        $url = "&sites=$location";
+    else{
+        $url .= "&sites=$location";
     }
+
+     $logger->log("USGS url:".$url,PEAR_LOG_DEBUG);
 
     //Get the usgs data via a zipped file from NWIS
     $data = get_usgs_zipped($logger,$url);
+
+
 
     // Remove the namespace prefix for easier parsing
     $data = str_replace('ns1:','', $data);
@@ -280,11 +287,12 @@ function getUSGS($period,$location){
                 $date = strtotime($date." ".$time) - $tzoff*3600;
             }
 
+            //Convert the value to SHEF nodata value
             if(floatval($val) != $noDataVal){
                 $usgs[$siteid]['data'][$date][$shef]['val'] = floatval($val);
             }
             else{
-                $usgs[$siteid]['data'][$date][$shef]['val'] = 0;
+                $usgs[$siteid]['data'][$date][$shef]['val'] = -9999;
             }
 
             $qualifier = (string)$val['qualifiers'];

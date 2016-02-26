@@ -75,6 +75,7 @@ if(LOG_TYPE == 'NULL'){
 /* Get the Statewide table of gages from HADS*/
 $siteInfo = getHADS_NWSLID_Lookup('ALL',3600);
 
+
 /* Develop a lookup table between the USGS id and NWSLID */
 
 $lookup = array();
@@ -110,9 +111,16 @@ $fileName = "USGSdischarge.".date('ymdHi');
 
 $logger->log("Request $period days worth of data for $location from USGS web services.",PEAR_LOG_INFO);
 
+if(!$location){
+    $logger->log("No Location specified for USGS grab.",PEAR_LOG_ERR);
+    exit;
+}
 
 
 $usgs = getUSGS($period,$location);
+
+
+
 
 #.AR BGDA2 150320 Z DH2129/DC1503202129/VBIRZZ 7.53/
 
@@ -137,7 +145,13 @@ foreach($usgs as $key => $value){
         $obstime = date('ymd \Z \D\HHi',$datekey);
 
         if(array_key_exists('QR',$data)){
-            $flow = floatval($data['QR'])/1000;
+
+            if(floatval($data['QR']['val']) == -9999) {
+                $flow = floatval($data['QR']['val']);
+            }
+            else{
+                $flow = floatval($data['QR']['val'])/1000;
+            }
             $shefFile .= ".AR $siteid $obstime/$dc/QRIRZZ ".$flow."\n";
             $linesInShef++;
         }
