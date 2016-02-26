@@ -36,13 +36,40 @@ require_once('Cache/Lite.php');
 /**
  * Setup PEAR logging utility
  */
-#$conf = array('mode' => 0600, 'timeFormat' => '%X %x');
-#$logger = Log::singleton('file', LOG_DIRECTORY.basename(__FILE__, '.php').'.log', __FILE__, $conf);
-$conf = array('dsn' => "mysqli://$User:$Passwd@$Host/aprfc",
-        'identLimit' => 255);
-$logger = Log::singleton('sql', 'log_table', __file__, $conf);
 
-$logger->log("Running ".basename(__FILE__, '.php'),PEAR_LOG_DEBUG);
+//Console gets more information, file and sql only get info and above errors
+$consoleMask = Log::MAX(PEAR_LOG_DEBUG);
+$fileMask = Log::MAX(PEAR_LOG_INFO);
+$sqlMask = Log::MAX(PEAR_LOG_INFO);
+
+$sessionId = 'ID:'.time();
+if(LOG_TYPE == 'DB'){
+    $conf = array('dsn' => "mysqli://".DB_USER.":".DB_PASSWORD."@".DB_HOST."/".DB_DATABASE,
+            'identLimit' => 255);
+
+    $sql = Log::factory('sql', 'log_table', __file__, $conf);
+    $sql->setMask($sqlMask);
+    $console = Log::factory('console','',$sessionId);
+    $console->setMask($consoleMask);
+    $logger = Log::singleton('composite');
+    $logger->addChild($console);
+    $logger->addChild($sql);
+}
+if(LOG_TYPE == 'FILE'){
+    $script = basename(__FILE__, '.php');
+    $file = Log::factory('file',LOG_DIRECTORY.$script.'.log',$sessionId);
+    $file->setMask($fileMask);
+    $console = Log::factory('console','',$sessionId);
+    $console->setMask($consoleMask);
+    $logger = Log::singleton('composite');
+    $logger->addChild($console);
+    $logger->addChild($file);
+}
+if(LOG_TYPE == 'NULL'){
+    $logger = Log::singleton('null');
+}
+
+
 
 
 function decode_igage10($email_date,$data,$verbose,$zerostage){
@@ -290,7 +317,7 @@ function array_to_shef($site,$dataarray,$overWrite = false,$PE){
  * 	MAIN PROGRAM LOGIC
  */ 
 
-
+$logger->log("END",PEAR_LOG_INFO);
 $sendshef = 0;
 $shefFile =  "SRAK58 PACR ".date('dHi')."\n";
 $shefFile .= "ACRRR3ACR \n";
@@ -330,11 +357,10 @@ $check = imap_check($mbox);
 
 $sbdmes = $check->Nmsgs;
 
-$logger->log("$sbdmes total messages in iridium inbox",PEAR_LOG_DEBUG);
+$logger->log("$sbdmes total messages in iridium inbox",PEAR_LOG_INFO);
 
 $numnew =  imap_num_recent($mbox);
 
-echo "$numnew New messages from Iridium in inbox ($sbdmes Total Messages)\n";
 
 
 ######Process each message
@@ -395,9 +421,8 @@ if($emails){
 				if($row['ingest']){
 					$shefFile .= HG_VB_to_shef($sitedata);
 					$sendshef++;
-					echo "Send shef: $sendshef\n";
 				}
-				print_r($sitedata);
+				
 			}
 		}  #If data loop
 		else{
@@ -406,6 +431,7 @@ if($emails){
 	}            
 }  #Outer if loop
 
+$logger->log("$sendshef Message in shef file",PEAR_LOG_INFO);
 
 ##############Output Shef File#####################################
 $fileName = "sheffile.hd.iGage.".date('ymdHi');
@@ -420,11 +446,11 @@ file_put_contents(TO_LDAD.$fileName, $shefFile);
 
 
 if($sendshef == 0){
-	$logger->log("No sites to ingest to AWIPS, Process Complete!",PEAR_LOG_DEBUG);
+	$logger->log("No sites to ingest to AWIPS, Process Complete!",PEAR_LOG_INFO);
  	exit();
 }
 
-
+$logger->log("END",PEAR_LOG_INFO);
 
 
 ?>
