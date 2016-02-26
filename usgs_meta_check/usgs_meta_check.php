@@ -11,7 +11,7 @@
 
 /* Configuration information */
 require_once('../config.inc.php');
-define('DEFAULT_CACHE_AGE',3600);
+define('DEFAULT_CACHE_AGE',3600);       /* Define the cache age for downloaded files */
 define('MAX_LOCATION_ERROR',0.1);       /* Distance used to define location error between AHPS and USGS */
 define('MAX_DATUM_ERROR',0.1);          /* Distance used to define datum error between AHPS and USGS */
 
