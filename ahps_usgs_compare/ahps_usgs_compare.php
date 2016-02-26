@@ -14,7 +14,7 @@ require_once('../config.inc.php');
 
 /* Directory for output graphs */
 define("IMAGE_OUTPUT","/hd1apps/data/intranet/html/tools/gagecompare/ahps_usgs_graphs/");
-
+#define("IMAGE_OUTPUT","ahps_usgs_graphs/");
 
 /* Web Function Library */
 require_once(RESOURCES_DIRECTORY."web_functions.php");
@@ -90,15 +90,22 @@ function XYarrays($dataObj,$param,$qualifier = NULL){
     foreach($dataObj as $date => $data){
         if(!isset($data[$param])) continue;
         if(!empty($qualifier)){
+            //skip qualifiers that don't match the requested
             if($data[$param]['q'] != $qualifier){
                 $xArray[] = $date;
                 $yArray[] = '';
                  continue;
             }
         }
+        //Check if the value is missing...if so set to 0 for plotting
         if(isset($data[$param]['val'])){
             $xArray[] = $date;
-            $yArray[] = $data[$param]['val'];
+            if($data[$param]['val'] != -9999){
+                $yArray[] = $data[$param]['val'];
+            }
+            else{
+                $yArray[] = 0;
+            }
         }
     }
     return array($xArray,$yArray);
