@@ -1,7 +1,9 @@
 <?php
 
+chdir(dirname(__FILE__));
 
-require_once('/usr/local/apps/scripts/bcj/hydroTools/config.inc.php');
+/* Include config file for paths etc..... */
+require_once('../config.inc.php');
 
 $mysqli->select_db("atlas14data");
 
