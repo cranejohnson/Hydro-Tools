@@ -16,11 +16,15 @@ require_once('../config.inc.php');
 define("IMAGE_OUTPUT","/hd1apps/data/intranet/html/tools/gagecompare/ahps_usgs_graphs/");
 #define("IMAGE_OUTPUT","ahps_usgs_graphs/");
 
-/* Web Function Library */
-require_once(RESOURCES_DIRECTORY."web_functions.php");
+//Pear log package
+include_once('Log.php');
 
 //Pear cache_lite package
 require_once('Cache/Lite.php');
+
+/* Web Function Library */
+require_once(RESOURCES_DIRECTORY."web_functions.php");
+
 
 //Jpgraph Library Files
 require_once(RESOURCES_DIRECTORY.'jpgraph/src/jpgraph.php');
@@ -28,8 +32,6 @@ require_once(RESOURCES_DIRECTORY.'jpgraph/src/jpgraph_line.php');
 require_once(RESOURCES_DIRECTORY.'jpgraph/src/jpgraph_scatter.php');
 require_once(RESOURCES_DIRECTORY.'jpgraph/src/jpgraph_date.php');
 
-//Pear log package
-include_once('Log.php');
 
 /**
  * Setup PEAR logging utility
@@ -174,10 +176,10 @@ else{
 }
 
 /* Get the Statewide table of gages from HADS*/
-$siteInfo = getHADS_NWSLID_Lookup($state,3600);
+$siteInfo = getHADS_NWSLID_Lookup($state,1);
 
 //Get AHPS Gage Report
-$ahpsReport = getAHPSreport(0,$filter);
+$ahpsReport = getAHPSreport(1,$filter);
 
 //Get AHPS Notes
 $hydroNotes = getAHPSNotes(3600);

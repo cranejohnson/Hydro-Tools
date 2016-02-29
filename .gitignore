@@ -10,3 +10,4 @@ ahps_usgs_compare/*/*.png
 TO_LDAD/*
 push2Ldad.php
 usgs_meta_check/*.html
+getUSGSQ.state
