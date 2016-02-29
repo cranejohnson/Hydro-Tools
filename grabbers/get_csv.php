@@ -223,6 +223,7 @@ while ($row = $result->fetch_assoc()){
 
 
     #Process each line of the csv data file
+    $siteLines = 0;
     foreach($lineArray as $line){
         $shefData = array();
         $recordTime;
@@ -332,7 +333,7 @@ while ($row = $result->fetch_assoc()){
 
         }
 
-
+       
         if($hasData){
             if($recordTime > $latestRecord){
                 $latestRecord = $recordTime;
@@ -343,13 +344,14 @@ while ($row = $result->fetch_assoc()){
             $q = "update csvIngest set lastRecordDatetime = '".date('Y-m-d H:i:s',$latestRecord)."' where lid = '{$row['lid']}'";
             if (!$debug) $mysqli->query($q) or die($mysqli->error);
             $numLines++;
+            $siteLines++;
             if(isset($shefData['data'])) $shefFile .= returnShefString($shefData,false);
             if($debug) echo "Shef String: ".returnShefString($shefData,true);
         }
 
     }
 
-    $logger->log("$numLines lines processed for  {$row['lid']}",PEAR_LOG_INFO);
+    $logger->log("$siteLines lines processed for  {$row['lid']}",PEAR_LOG_INFO);
 }
 
 
@@ -368,7 +370,6 @@ if($numLines == 0){
 
 }
 else{
-    echo $shefFile;
     file_put_contents(TO_LDAD.$fileName, $shefFile);
     $logger->log("$numLines lines encoded into shef file.",PEAR_LOG_INFO);
 }
