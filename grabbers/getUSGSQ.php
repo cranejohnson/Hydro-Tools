@@ -5,7 +5,7 @@
  * Example usage ' php getUSGSQ.php AK PT2H RZ'
  *       Get data for Alaska the last 2 hours and set typesource as RZ
  *
- * The lastUpdate state is stored in a local file getUSGSQ.state 
+ * The lastUpdate state is stored in a local file getUSGSQ.state
  *
  *
  * @package getUSGS
@@ -85,13 +85,13 @@ foreach($siteInfo['sites'] as $nwslid=>$site){
     }
 
 
-//Handle the command line arguments 
+//Handle the command line arguments
 $opts = getoptreq('a:p:t:f', array());
 
 $period = strtoupper($opts["p"]);
 
 if(!isset($opts["a"])){
-    $logger->log("No area defined to check! (eg: -a AK)",PEAR_LOG_WARNING);
+    $logger->log("No area defined to check! (eg: -a AK -p P1D -t RZ)",PEAR_LOG_WARNING);
     exit;
 }
 else{
@@ -106,22 +106,22 @@ else{
     else{
         $logger->log("A State or NWSLID was not specified",PEAR_LOG_ERR);
         exit;
-    }    
+    }
 }
 
 if(isset($opts["f"])){
     $force = true;
 }
-else{   
+else{
     $force = false;
-}    
+}
 
 if(!isset($opts["t"])){
    $typesource = 'RZ';
 }
 else{
    $typesource = strtoupper($opts["t"]);
-}   
+}
 
 
 $fileName = "USGSdischarge.".date('ymdHi');
@@ -164,7 +164,7 @@ foreach($usgs as $key => $value){
         $obstime = date('ymd \Z \D\HHi',$datekey);
 
         //Check if this data is newer than the last update
-       
+
         if(isset($lastUpdate[$siteid])){
             if($datekey <= strtotime($lastUpdate[$siteid])){
                 if(!$force)continue;
@@ -174,9 +174,9 @@ foreach($usgs as $key => $value){
             }
         }
         else{
-            $lastUpdate[$siteid] = date('c',$datekey); 
+            $lastUpdate[$siteid] = date('c',$datekey);
         }
-        
+
         if(array_key_exists('QR',$data)){
 
             if(floatval($data['QR']['val']) == -9999) {

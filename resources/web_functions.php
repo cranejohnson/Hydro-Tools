@@ -1,5 +1,8 @@
 <?php
 
+//Pear cache_lite package
+require_once('Cache/Lite.php');
+
 
 /**
 * Get options from the command line or web request
@@ -93,53 +96,114 @@ function get_usgs_zipped($logger,$url){
     return $content;
 }
 
+/**
+ * This class extends PEAR Cache_Lite
+ *
+ * If provides a method to return data no matter what.....it will first check the cache
+ * file and use if it has not expired.  If it has expired it will check for a new
+ * version and cache the file again.  If it fails to get a new version it will use the
+ * previously cached version.
+ *
+ * In an opperational setting this will nearly always return a cached version of the file.
+ *
+ * If the expiry time is set to 0 a new url download is required.
+ * If the expiry time is set to 1 a new url is preferred.
+ *
+ */
 
-function get_URL_Cache($url,$options){
+class Cache_Lite_Hydro extends Cache_Lite {
+    var $note = "";
 
-    global $logger;  //Global pear logger class
-
-    $Cache_Lite = new Cache_Lite($options);
-
-    if($cache_data = $Cache_Lite->get($id)){
-        $timestamp = date('Y-m-d H:i',$Cache_Lite->lastModified($id));
-        $logger->log("Using cached($timestamp) date from:$url",PEAR_LOG_INFO);
+    function setNote($note){
+        $this->note = $note;
     }
-    else{
-        $cache_data = file_get_contents($url);
-        if ($cache_data === false) {
-            $logger->log("Failed to get $url",PEAR_LOG_ERR);
-            //Extend Life of Old file
-            $Cache_Lite->extendLife();
-            $cache_data = $Cache_Lite->get($id);
-            if(!$cache_data){
-                $logger->log("No data: $url",PEAR_LOG_ERR);
-                return false;
-            }
 
-            $logger->log("Using old cached version:$url",PEAR_LOG_WARNING);
+    function getData($id,$url){
+        global $logger;
+
+        if($cache_data = $this->get($id)){
+            $timestamp = date('Y-m-d H:i',$this->lastModified($id));
+            $logger->log("Using cached($timestamp) data for $id",PEAR_LOG_INFO);
+            $this->setNote("Using $id cached: $timestamp");
         }
-    }
+        else{
+            $cache_data = file_get_contents($url);
+
+            if($cache_data === false){
+                $logger->log("Failed to get $url extending cache life",PEAR_LOG_WARNING);
+                //Extend Life of Old file
+                $timestamp = date('Y-m-d H:i',$this->lastModified($id));
+                $this->extendLife();
+                $cache_data = $this->get($id);
+                if(!$cache_data){
+                    $logger->log("No data for $id",PEAR_LOG_ERR);
+                    return false;
+                }
+                $this->setNote("Using $id cached: $timestamp");
+                $logger->log("Using old cached version for $id",PEAR_LOG_WARNING);
+            }
+            else{
+                $logger->log("Downloaded new data for: $id from $url",PEAR_LOG_INFO);
+                $this->setNote("Using $id downloaded: ".date('Y-m-d H:i',$this->lastModified($id)));
+                if($this->save($cache_data,$id)){
+                    $logger->log("$id cache saved",PEAR_LOG_INFO);
+                }
+                else{
+                    $logger->log("HADS Cache failed to save.",PEAR_LOG_ERR);
+                }
+            }
+        }
     return $cache_data;
+    }
 }
+
+// function get_URL_Cache($url,$options){
+//
+//     global $logger;  //Global pear logger class
+//
+//
+//     $Cache_Lite = new Cache_Lite($options);
+//
+//     if($cache_data = $Cache_Lite->get($id)){
+//         $timestamp = date('Y-m-d H:i',$Cache_Lite->lastModified($id));
+//         $logger->log("Using cached($timestamp) date from:$url",PEAR_LOG_INFO);
+//     }
+//     else{
+//         $cache_data = file_get_contents($url);
+//         if ($cache_data === false) {
+//             $logger->log("Failed to get $url",PEAR_LOG_ERR);
+//             //Extend Life of Old file
+//             $Cache_Lite->extendLife();
+//             $cache_data = $Cache_Lite->get($id);
+//             if(!$cache_data){
+//                 $logger->log("No data: $url",PEAR_LOG_ERR);
+//                 return false;
+//             }
+//
+//             $logger->log("Using old cached version:$url",PEAR_LOG_WARNING);
+//         }
+//     }
+//     return $cache_data;
+// }
 
 
 
 /**
  * Get HADS USGS-NWSLI Cross Reference Table
  *
- * @param obj $logger PEAR event logging object
  * @param string $stat Two letter state abbreviation or 'ALL' for all sites
  * @param int $age If > 0 use cache with this age, if 0 do not use cache, defualt: 1day
  * @return array Array of current USGS sites with corresponding NWSLI id
  * @access public
  */
 function getHADS_NWSLID_Lookup($state,$age=86400){
-
-    $url = URL_HADSIDLOOKUP;
-
     global $logger;  //Global pear logger class
 
-    $state = strtoupper($state);
+    $textdata = '';
+    $sites = array();
+
+    $url = URL_HADSIDLOOKUP.strtoupper($state)."_USGS-HADS_SITES.txt";
+
     $id = 'HADS_LOOKUP_'.$state;
     $options = array(
         'cacheDir' => CACHE_DIR,
@@ -147,36 +211,15 @@ function getHADS_NWSLID_Lookup($state,$age=86400){
         'fileNameProtection' => false
     );
 
-    $Cache_Lite = new Cache_Lite($options);
-    $textdata = '';
+    $Cache_Lite = new Cache_Lite_Hydro($options);
 
-    $sites = array();
+    $textdata = $Cache_Lite->getData($id,$url);
 
-    if($cache_data = $Cache_Lite->get($id)){
-        $timestamp = date('Y-m-d H:i',$Cache_Lite->lastModified($id));
-        $sites = json_decode($cache_data,true);
-        $logger->log("Using HADS lookup table cached: $timestamp",PEAR_LOG_INFO);
-        $sites['notes'] = "Using HADS lookup table cached: $timestamp";
-    }
-    else{
-        $sites = array();
-        $start = time();
-        $url .= $state."_USGS-HADS_SITES.txt";
-        $textdata = file_get_contents($url);
-        if ($textdata === false) {
-            $logger->log("Failed to get HADS Crosswalk Table from $url",PEAR_LOG_ERR);
-            //Extend Life of Old file
-            $Cache_Lite->extendLife();
-            $cache_data = $Cache_Lite->get($id);
-            $sites = json_decode($cache_data,true);
-            $logger->log("Using HADS lookup table cached: $timestamp",PEAR_LOG_INFO);
-            $sites['notes'] = "Using HADS lookup table cached: $timestamp";
-        }
-        else{
-            $downloadTime = time()-$start;
-            $logger->log("HADS Lookup Download in $downloadTime seconds.",PEAR_LOG_INFO);
-        }
-        $sites = array();
+
+    $sites['notes'] = $Cache_Lite->note;
+
+    if($textdata){
+
         $sites['columns'] = array('usgs','name','hsa','lat','lon');
 
         //Remove the first four lines of the file that are header information and place
@@ -196,17 +239,15 @@ function getHADS_NWSLID_Lookup($state,$age=86400){
             $i++;
         }
 
-        $timestamp = date('Y-m-d H:i');
-        $sites['cached'] = $timestamp;
-        if($Cache_Lite->save(json_encode($sites),$id)){
-        }
-        else{
-            $logger->log("HADS Cache failed to save.",PEAR_LOG_ERR);
 
-        }
+        $sites['cached'] = date('Y-m-d H:i',$Cache_Lite->lastModified($id));
+
+        return $sites;
+    }
+    else{
+        return false;
     }
 
-    return $sites;
 }
 
 
@@ -215,7 +256,6 @@ function getHADS_NWSLID_Lookup($state,$age=86400){
  * bandwidth.
  *
  * @param int $days The number of days to request
- * @param obj $logger PEAR event logging object.
  * @param string $location two letter state abbreviation or usgs location code
  * @return array Associative array of USGS data for each site.
  * @access public
@@ -373,7 +413,6 @@ function getUSGS_siteInfo($url){
  * @access public
  */
 function getAhpsData($siteid){
-
     global $logger;  //Global pear logger class
 
     $ahps = array();
@@ -450,7 +489,6 @@ function read_file_filter($filename,$delim = ',',$filter = null){
     $filterCol = null;
     $handle = fopen($filename, 'r');
     if ($handle) {
-
         $line = fgets($handle);
         $fileContents[] = trim($line);
         $headers = str_getcsv($line,$delim,'"');
@@ -479,24 +517,28 @@ function read_file_filter($filename,$delim = ',',$filter = null){
     }
     fclose($handle);
     //Return an array of lines
-    return $fileContents;
+    if(count($fileContents)==0){
+        return false;
+    }
+    else{
+        return $fileContents;
+    }
 }
 
 /**
  * Get AHPS Report data.
  *
  *
- * @param obj $logger Event logging object.
  * @param string $url AHPS report url
  * @param int $age If > 0 use cache with this age, if 0 do not use cache
  * @return array Associative array of AHPS Report data for each site.
  * @access public
  */
 function getAHPSreport($age = 86400,$filter = null){
+    global $logger;  //Global pear logger class
 
     $url = URL_AHPSREPORT;
     $url .= "?type=csv";
-    global $logger;  //Global pear logger class
 
     if(isset($filter)){
         $id = 'AHPS_stage_flow_'.$filter['column']."_".$filter['value'];
@@ -513,7 +555,9 @@ function getAHPSreport($age = 86400,$filter = null){
     $Cache_Lite = new Cache_Lite($options);
     $resultArray = array();
     $numOut = 0;
-    $textdata = '';
+    $textData = '';
+
+
 
     if( $cache_data = $Cache_Lite->get($id)){
         $resultArray = json_decode($cache_data,true);
@@ -524,37 +568,47 @@ function getAHPSreport($age = 86400,$filter = null){
     else{
         $start = time();
         $textData = read_file_filter($url,',',$filter);
-        if (count($textdata) == 0) {
-           $logger->log("Failed to get AHPS report from $url",PEAR_LOG_ERR);
-        }
-        else{
-            $resultArray = array();
-            $downloadTime = time()-$start;
-            $parts = str_getcsv($textData[0],",",'"');
-            foreach($parts as $p){
-                $resultArray['columns'][] = preg_replace("/[^A-Za-z0-9]/",'',$p);
+        if (!$textData) {
+            $logger->log("Failed to $id from $url",PEAR_LOG_ERR);
+            //Extend Life of Old file
+            $timestamp = date('Y-m-d H:i',$Cache_Lite->lastModified($id));
+            $Cache_Lite->extendLife();
+            $cache_data = $Cache_Lite->get($id);
+            if(!$cache_data){
+                $logger->log("No data available for $id",PEAR_LOG_ERR);
+                return false;
             }
-
-            array_shift($textData);
-
-            foreach($textData as $site){
-                $parts = str_getcsv($site,",",'"');
-                $nws = strtoupper($parts[3]);
-                $i=0;
-                foreach($resultArray['columns'] as $col){
-                    $resultArray['sites'][$nws][$col] = $parts[$i];
-                    $i++;
-                }
-                $resultArray['sites'][$nws]['name'] = $parts[2]." ".$parts[1]." ".$parts[0];
-            }
-
-            $resultArray['columns'][] = 'name';
-            $logger->log("AHPS report in $downloadTime seconds.",PEAR_LOG_INFO);
-            $resultArray['outOfService'] = $numOut;
-            $timestamp = date('Y-m-d H:i');
-            $resultArray['cached'] = $timestamp;
-            $Cache_Lite->save(json_encode($resultArray),$id);
+            $logger->log("Using old cached version for $id from $timestamp",PEAR_LOG_WARNING);
+            //Return cached array
+            return $resultArray;
         }
+        $logger->log("Downloaded $id from $url",PEAR_LOG_INFO);
+        $resultArray = array();
+        $downloadTime = time()-$start;
+        $parts = str_getcsv($textData[0],",",'"');
+        foreach($parts as $p){
+            $resultArray['columns'][] = preg_replace("/[^A-Za-z0-9]/",'',$p);
+        }
+
+        array_shift($textData);
+
+        foreach($textData as $site){
+            $parts = str_getcsv($site,",",'"');
+            $nws = strtoupper($parts[3]);
+            $i=0;
+            foreach($resultArray['columns'] as $col){
+                $resultArray['sites'][$nws][$col] = $parts[$i];
+                $i++;
+            }
+            $resultArray['sites'][$nws]['name'] = $parts[2]." ".$parts[1]." ".$parts[0];
+        }
+
+        $resultArray['columns'][] = 'name';
+        $resultArray['outOfService'] = $numOut;
+        $timestamp = date('Y-m-d H:i');
+        $resultArray['cached'] = $timestamp;
+        $Cache_Lite->save(json_encode($resultArray),$id);
+
     }
 
     return $resultArray;
@@ -563,48 +617,43 @@ function getAHPSreport($age = 86400,$filter = null){
 
 
 function parseTable($html){
-  libxml_use_internal_errors(true);
+    libxml_use_internal_errors(true);
 
-  /* Remove <nobr> tags, these are not strict HTML */
+    /* Remove <nobr> tags, these are not strict HTML */
 
-  $html = str_replace('<nobr>','',$html);
-  $html = str_replace('</nobr>','',$html);
-  $html = preg_replace('/&(?!amp;)/', '&amp;', $html);
-  $notes = array();                         //Array to keep note information.
-  $dom = new domDocument;
-  $dom->loadHTML($html);  //Required to account for rouge & chars in html links.
-  $dom->preserveWhiteSpace = false;
-  $tables = $dom->getElementsByTagName('table');
-  $rows = $tables->item(0)->getElementsByTagName('tr');
+    $html = str_replace('<nobr>','',$html);
+    $html = str_replace('</nobr>','',$html);
+    $html = preg_replace('/&(?!amp;)/', '&amp;', $html);
+    $notes = array();                         //Array to keep note information.
+    $dom = new domDocument;
+    $dom->loadHTML($html);  //Required to account for rouge & chars in html links.
+    $dom->preserveWhiteSpace = false;
+    $tables = $dom->getElementsByTagName('table');
+    $rows = $tables->item(0)->getElementsByTagName('tr');
 
-  foreach($rows as $row){
-
-
+    foreach($rows as $row){
         $cols = $row->getElementsByTagName('td');
-
         if ($cols->length == 0) continue;
 
-    $nwslid = strtoupper($cols->item(0)->nodeValue);
-    $notes['sites'][$nwslid]['note1']['text'] = $cols->item(2)->nodeValue;
-    $notes['sites'][$nwslid]['note2']['text'] = $cols->item(3)->nodeValue;
-    $div1 = $cols->item(2)->getElementsByTagName('div');
-    $div2 = $cols->item(3)->getElementsByTagName('div');
+        $nwslid = strtoupper($cols->item(0)->nodeValue);
+        $notes['sites'][$nwslid]['note1']['text'] = $cols->item(2)->nodeValue;
+        $notes['sites'][$nwslid]['note2']['text'] = $cols->item(3)->nodeValue;
+        $div1 = $cols->item(2)->getElementsByTagName('div');
+        $div2 = $cols->item(3)->getElementsByTagName('div');
 
-    if($div1->item(0)->getAttribute('class') == "not_in_season"){
-      $notes['sites'][$nwslid]['note1']['active'] = 0;
-    }
-    else{
-      $notes['sites'][$nwslid]['note1']['active'] = 1;
-    }
+        if($div1->item(0)->getAttribute('class') == "not_in_season"){
+            $notes['sites'][$nwslid]['note1']['active'] = 0;
+        }
+        else{
+            $notes['sites'][$nwslid]['note1']['active'] = 1;
+        }
 
-    if($div2->item(0)->getAttribute('class') == "not_in_season"){
-      $notes['sites'][$nwslid]['note2']['active'] = 0;
-    }
-    else{
-      $notes['sites'][$nwslid]['note2']['active'] = 1;
-    }
-
-
+        if($div2->item(0)->getAttribute('class') == "not_in_season"){
+            $notes['sites'][$nwslid]['note2']['active'] = 0;
+        }
+        else{
+            $notes['sites'][$nwslid]['note2']['active'] = 1;
+        }
     }
     return (array)$notes;
 }
@@ -620,10 +669,9 @@ function parseTable($html){
  * @access public
  */
 function getAHPSNotes($age = 86400){
-
-    $url = URL_AHPSNOTES;
     global $logger;  //Global pear logger class
 
+    $url = URL_AHPSNOTES;
 
     $id = 'hydro_notes';
 
@@ -638,42 +686,36 @@ function getAHPSNotes($age = 86400){
     $resultArray = array();
 
     if($cache_data = $cache->get($id)){
-
         $resultArray = json_decode($cache_data,true);
         $timestamp = date('Y-m-d H:i',$cache->lastModified($id));
-        $logger->log("Using AHPS notes table cached: $timestamp",PEAR_LOG_INFO);
+        $logger->log("Using $id cached: $timestamp",PEAR_LOG_INFO);
         $resultArray['notes'] = "Using the cached AHPS <a href='".$url."'>Note Report </a> from $timestamp.";
-
     }
     else{
-      $resultArray = array();
-      $start = time();
-
-      $ahpsNotes = '';
-      $ahpsNotes = file_get_contents($url);
-      if ($ahpsNotes === false) {
-        $resultArray['notes']= "Failed to get hydro notes from <a href = '".$config->config->notes_url."'>".$config->config->notes_url."</a><br>";
-        $logger->log("Failed to download AHPS Notes Table from: $url",PEAR_LOG_ERR);
-      }
-      else{
-          $downloadTime = time()-$start;
-          $logger->log("Downloaded AHPS Notes Table in $downloadTime seconds",PEAR_LOG_INFO);
-
-          $resultArray = parseTable($ahpsNotes);
-          $processTime = time()-$start;
-          $resultArray['notes']  = "AHPS <a href='".$url."'>Note Report </a> downloaded in $downloadTime seconds.<br>";
-          $timestamp = date('Y-m-d H:i');
-          $resultArray['cached'] = $timestamp;
-          if($cache->save(json_encode($resultArray))){
-            $logger->log("Saved AHPS notes table to cache",PEAR_LOG_INFO);
-          }else{
-            $logger->log("Failed to save AHPS notes table to cache",PEAR_LOG_ERR);
+        $resultArray = array();
+        $start = time();
+        $ahpsNotes = '';
+        $ahpsNotes = file_get_contents($url);
+        if ($ahpsNotes === false) {
+            $resultArray['notes']= "Failed to get hydro notes from <a href = '".$config->config->notes_url."'>".$config->config->notes_url."</a><br>";
+            $logger->log("Failed to download $id from: $url",PEAR_LOG_ERR);
         }
+        else{
+            $downloadTime = time()-$start;
+            $logger->log("Downloaded $id in $downloadTime seconds",PEAR_LOG_INFO);
 
-      }
+            $resultArray = parseTable($ahpsNotes);
+            $processTime = time()-$start;
+            $resultArray['notes']  = "AHPS <a href='".$url."'>Note Report </a> downloaded in $downloadTime seconds.<br>";
+            $timestamp = date('Y-m-d H:i');
+            $resultArray['cached'] = $timestamp;
+            if($cache->save(json_encode($resultArray))){
+                $logger->log("Saved $id to cache",PEAR_LOG_INFO);
+            }else{
+                $logger->log("Failed to save $id to cache",PEAR_LOG_ERR);
+            }
+        }
     }
-
-
-  return $resultArray;
+    return $resultArray;
 }
 ?>
