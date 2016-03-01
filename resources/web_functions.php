@@ -457,17 +457,19 @@ function getAhpsData($siteid){
 
     $ahps['gageDatum'] = $siteData->zerodatum;
 
-    foreach($siteData->observed->datum as $value){
-        if($value->secondary['units'] == 'cfs'){
-            $mult = 1;
-        }
-        else{
-            $mult = 1000;
-        }
-        $discharge = floatval($value->secondary)*$mult;
+    if(isset($siteData->observed->datum)){
+        foreach($siteData->observed->datum as $value){
+            if($value->secondary['units'] == 'cfs'){
+                $mult = 1;
+            }
+            else{
+                $mult = 1000;
+            }
+            $discharge = floatval($value->secondary)*$mult;
 
-        if(isset($value->secondary) && ($discharge != -999000)) $ahps[$siteid]['data'][strtotime($value->valid)]['QR']['val'] = $discharge;
-        $ahps[$siteid]['data'][strtotime($value->valid)]['HG']['val'] = floatval($value->primary);
+            if(isset($value->secondary) && ($discharge != -999000)) $ahps[$siteid]['data'][strtotime($value->valid)]['QR']['val'] = $discharge;
+            $ahps[$siteid]['data'][strtotime($value->valid)]['HG']['val'] = floatval($value->primary);
+        }
     }
 
     if(isset($ahps[$siteid]['data'])) ksort($ahps[$siteid]['data']);

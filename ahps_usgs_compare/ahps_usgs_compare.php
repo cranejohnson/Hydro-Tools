@@ -179,13 +179,13 @@ else{
 }
 
 /* Get the Statewide table of gages from HADS*/
-$siteInfo = getHADS_NWSLID_Lookup($state,1);
+$siteInfo = getHADS_NWSLID_Lookup($state,0);
 
 //Get AHPS Gage Report
-$ahpsReport = getAHPSreport(1,$filter);
+$ahpsReport = getAHPSreport(0,$filter);
 
 //Get AHPS Notes
-$hydroNotes = getAHPSNotes(3600);
+$hydroNotes = getAHPSNotes(0);
 
 //Object to hold error between USGS and AHPS data
 $jsonError = array();
