@@ -86,7 +86,7 @@ foreach($siteInfo['sites'] as $nwslid=>$site){
 
 
 //Handle the command line arguments
-$opts = getoptreq('a:p:t:f', array());
+$opts = getoptreq('a:p:t:fl', array());
 
 $period = strtoupper($opts["p"]);
 
@@ -123,8 +123,14 @@ else{
    $typesource = strtoupper($opts["t"]);
 }
 
+if(isset($opts["l"])){
+    $fileName = "USGSdischarge.".date('ymdHi');
+}
+else{
+    $fileName = "sheffile.USGS.".date('ymdHi');
+}
 
-$fileName = "USGSdischarge.".date('ymdHi');
+
 
 
 $logger->log("Request $period days worth of data for $location from USGS web services.",PEAR_LOG_INFO);
@@ -150,6 +156,10 @@ else{
 #.AR BGDA2 150320 Z DH2129/DC1503202129/VBIRZZ 7.53/
 
 $shefFile = '';
+
+$shefFile =  "SRAK58 PACR ".date('dHi')."\n";
+$shefFile .= "ACRRR3ACR \n";
+$shefFile .= "WGET DATA REPORT \n\n";
 
 $numSites = 0;
 $linesInShef = 0;
