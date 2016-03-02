@@ -16,8 +16,8 @@ chdir(dirname(__FILE__));
 require_once('../config.inc.php');
 
 /* Directory for output graphs */
-#define("IMAGE_OUTPUT","/hd1apps/data/intranet/html/tools/gagecompare/ahps_usgs_graphs/");
-define("IMAGE_OUTPUT","ahps_usgs_graphs/");
+define("IMAGE_OUTPUT","/hd1apps/data/intranet/html/tools/gagecompare/ahps_usgs_graphs/");
+#define("IMAGE_OUTPUT","ahps_usgs_graphs/");
 
 //Pear log package
 include_once('Log.php');
