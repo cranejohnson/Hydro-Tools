@@ -47,7 +47,7 @@ echo "<br><br>Latest Gage-Compare Log File Information<br><br>";
 
 echo "Created: ".$errorsJson['runTime']."<br>";
 
-if(count($errorsJson) == 0){
+if(count($errorsJson['sites']) == 0){
     echo "<p>No Errors during the last run</p>";
 }
 

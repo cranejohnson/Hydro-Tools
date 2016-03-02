@@ -14,6 +14,8 @@
 
 chdir(dirname(__FILE__));
 
+
+
 /* Include config file for paths etc..... */
 require_once('../config.inc.php');
 

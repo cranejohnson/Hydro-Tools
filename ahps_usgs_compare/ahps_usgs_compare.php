@@ -189,6 +189,7 @@ $hydroNotes = getAHPSNotes(0);
 
 //Object to hold error between USGS and AHPS data
 $jsonError = array();
+$jsonError['sites'] = array();
 
 $logger->log(count($siteInfo['sites'])." sites in HADS table. ",PEAR_LOG_INFO);
 
@@ -269,7 +270,7 @@ foreach($siteInfo['sites'] as $nws => $site){
     }
 
 
-     //Check if USGS is plotting Discharge and/or stage
+     //Get the most recent values for both USGS and AHPS
     $lastUSGS =array();
     $lastAHPS =array();
 
@@ -321,7 +322,8 @@ foreach($siteInfo['sites'] as $nws => $site){
           }
         }
     }
-        //Find the difference between all USGS and AHPS stages where readings are concurrent
+    
+    //Find the difference between all USGS and AHPS stages where readings are concurrent
     if($USGS_HG && $AHPS_HG){
         $stageDiff = findDiff($ahps[$nws]['data'],$usgs[$index]['data'],'HG');
         $diffDate = max(array_keys($stageDiff));
