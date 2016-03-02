@@ -138,8 +138,14 @@ if(!$location){
 $usgs = getUSGS($period,$location);
 
 $lastUpdate = array();
-$lastUpdate = json_decode(file_get_contents('getUSGSQ.state'),true);
 
+
+if(file_exists('getUSGSQ.state')){
+    $lastUpdate = json_decode(file_get_contents('getUSGSQ.state'),true);
+}
+else{
+    $logger->log("No state file. Will create one.",PEAR_LOG_INFO);
+}
 
 #.AR BGDA2 150320 Z DH2129/DC1503202129/VBIRZZ 7.53/
 

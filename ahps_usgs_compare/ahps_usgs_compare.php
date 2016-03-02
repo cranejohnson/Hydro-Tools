@@ -16,8 +16,8 @@ chdir(dirname(__FILE__));
 require_once('../config.inc.php');
 
 /* Directory for output graphs */
-define("IMAGE_OUTPUT","/hd1apps/data/intranet/html/tools/gagecompare/ahps_usgs_graphs/");
-#define("IMAGE_OUTPUT","ahps_usgs_graphs/");
+#define("IMAGE_OUTPUT","/hd1apps/data/intranet/html/tools/gagecompare/ahps_usgs_graphs/");
+define("IMAGE_OUTPUT","ahps_usgs_graphs/");
 
 //Pear log package
 include_once('Log.php');
@@ -317,7 +317,7 @@ foreach($siteInfo['sites'] as $nws => $site){
             $mostRecent = end($qDiff);
             if((abs($mostRecent['diff']['percent']) > 3) && (abs($mostRecent['diff']['val']) > 3)) {
                 $logger->log("Discharge difference of ".$mostRecent['diff']['percent']."% or ".$mostRecent['diff']['val']." cfs for site ".$nws,PEAR_LOG_ERR);
-                $jsonError['sites'][$nws][] = "Discharge differnce of ".$mostRecent['diff']['percent']."% or ".$mostRecent['diff']['val']." cfs";
+                $jsonError['sites'][$nws][] = "Discharge difference of ".$mostRecent['diff']['percent']."% or ".$mostRecent['diff']['val']." cfs";
           }
         }
     }
@@ -511,7 +511,6 @@ foreach($siteInfo['sites'] as $nws => $site){
         }
 
         //Plot stage data if needed
-#        if(count($stageDiff)>0 && $generate){
          if(count($stageDiff)>0){
             $graphData = XYarrays($stageDiff,'diff');
             //print_r($graphData);
@@ -539,6 +538,7 @@ foreach($siteInfo['sites'] as $nws => $site){
     }
 }
 
+$jsonError['runTime'] = date('Y-m-d H:i',time());
 file_put_contents(IMAGE_OUTPUT.'ahpsErrors.json',json_encode($jsonError));
 $logger->log("Completed comparing $i site(s)! ",PEAR_LOG_INFO);
 $logger->log("Peak memory: ".memory_get_peak_usage(true),PEAR_LOG_INFO);

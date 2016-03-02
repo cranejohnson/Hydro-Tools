@@ -45,6 +45,8 @@ $errorsJson = json_decode(file_get_contents('ahps_usgs_graphs/ahpsErrors.json'),
 
 echo "<br><br>Latest Gage-Compare Log File Information<br><br>";
 
+echo "Created: ".$errorsJson['runTime']."<br>";
+
 if(count($errorsJson) == 0){
     echo "<p>No Errors during the last run</p>";
 }

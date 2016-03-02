@@ -204,7 +204,10 @@ function getHADS_NWSLID_Lookup($state,$age=86400){
 
     $url = URL_HADSIDLOOKUP.strtoupper($state)."_USGS-HADS_SITES.txt";
 
-    $id = 'HADS_LOOKUP_'.$state;
+    $processUser = posix_getpwuid(posix_geteuid());
+
+    $id = 'HADS_LOOKUP_'.$state.'_'.$processUser['name'];
+
     $options = array(
         'cacheDir' => CACHE_DIR,
         'lifeTime' =>$age,
@@ -548,6 +551,11 @@ function getAHPSreport($age = 86400,$filter = null){
     else{
         $id = 'AHPS_stage_flow';
     }
+
+    $processUser = posix_getpwuid(posix_geteuid());
+
+    $id .= '_'.$processUser['name'];
+
     $options = array(
         'cacheDir' => CACHE_DIR,
         'lifeTime' => $age,
@@ -676,6 +684,9 @@ function getAHPSNotes($age = 86400){
     $url = URL_AHPSNOTES;
 
     $id = 'hydro_notes';
+
+    $processUser = posix_getpwuid(posix_geteuid());
+    $id .= '_'.$processUser['name'];
 
     $options = array(
         'cacheDir' => CACHE_DIR,
