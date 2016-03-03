@@ -209,7 +209,8 @@ function getHADS_NWSLID_Lookup($state,$age=86400){
     $options = array(
         'cacheDir' => CACHE_DIR,
         'lifeTime' =>$age,
-        'fileNameProtection' => false
+        'fileNameProtection' => false,
+        'cacheFileMode' => 0777
     );
 
     $Cache_Lite = new Cache_Lite_Hydro($options);
@@ -554,7 +555,8 @@ function getAHPSreport($age = 86400,$filter = null){
     $options = array(
         'cacheDir' => CACHE_DIR,
         'lifeTime' => $age,
-        'fileNameProtection' => false
+        'fileNameProtection' => false,
+        'cacheFileMode' => 0777
     );
 
     $Cache_Lite = new Cache_Lite($options);
@@ -684,7 +686,8 @@ function getAHPSNotes($age = 86400){
     $options = array(
         'cacheDir' => CACHE_DIR,
         'lifeTime' => $age,
-         'fileNameProtection' => false
+         'fileNameProtection' => false,
+         'cacheFileMode' => 0777
         );
 
     $cache = new Cache_Lite($options);
