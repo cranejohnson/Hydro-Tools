@@ -23,6 +23,10 @@ chdir(dirname(__FILE__));
 require_once('../config.inc.php');
 
 
+$PECode= array(
+      'EKLA2' => 'HP'
+);
+
 
 /* Web Function Library */
 require_once(RESOURCES_DIRECTORY."web_functions.php");
@@ -123,11 +127,20 @@ else{
    $typesource = strtoupper($opts["t"]);
 }
 
+$shefFile = '';
+
+//Check if the -l (local) option is flagged
+//if not add the correct header to the file.
 if(isset($opts["l"])){
     $fileName = "USGSdischarge.".date('ymdHi');
+    $logger->log("Local Shef File",PEAR_LOG_INFO);
 }
 else{
     $fileName = "sheffile.USGS.".date('ymdHi');
+    $shefFile =  "SRAK58 PACR ".date('dHi')."\n";
+    $shefFile .= "ACRRR3ACR \n";
+    $shefFile .= "WGET DATA REPORT \n\n";
+    $logger->log("Shef File for SBN",PEAR_LOG_INFO);
 }
 
 
@@ -155,11 +168,7 @@ else{
 
 #.AR BGDA2 150320 Z DH2129/DC1503202129/VBIRZZ 7.53/
 
-$shefFile = '';
 
-$shefFile =  "SRAK58 PACR ".date('dHi')."\n";
-$shefFile .= "ACRRR3ACR \n";
-$shefFile .= "WGET DATA REPORT \n\n";
 
 $numSites = 0;
 $linesInShef = 0;
@@ -205,7 +214,10 @@ foreach($usgs as $key => $value){
             $linesInShef++;
         }
         if(array_key_exists('HG',$data)){
-            $shefFile .= ".AR $siteid $obstime/$dc/HGI".$typesource."Z ".$data['HG']['val']."\n";
+	    $PE = 'HG';
+	    if(isset($PECode[$siteid])) $PE = $PECode[$siteid];	
+            
+            $shefFile .= ".AR $siteid $obstime/$dc/".$PE."I".$typesource."Z ".$data['HG']['val']."\n";
             $linesInShef++;
         }
 
