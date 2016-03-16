@@ -10,7 +10,12 @@ date_default_timezone_set('UTC');
 #Every script that uses this should 'require_once('pathto/config.inc.php');
 
 
-//Log to either a 'FILE' or 'DB'
+
+
+//Options 'FILE'  - File Logging
+//        'DB'    - Log to mysql database
+//        'NULL'  - No logging
+
 // if 'DB' you need mysql database with table test up according to
 // CREATE TABLE log_table (
 //    id          INT NOT NULL,
@@ -20,7 +25,8 @@ date_default_timezone_set('UTC');
 //    message     VARCHAR(200),
 //    PRIMARY KEY (id)
 // );
-define("LOG_TYPE","DB");
+define("LOG_TYPE","FILE");
+define("SHEF_HEADER","SRAK58 PACR ".date('dHi')."\nACRRR3ACR \nWGET DATA REPORT \n\n");
 
 
 //Constants for Paths
@@ -37,13 +43,19 @@ define("WEB_DIRECTORY",PROJECT_ROOT."web/");
 
 
 //Constants for web resources
+
+//AHPS gage report
 define("URL_AHPSREPORT","http://water.weather.gov/monitor/ahpsreport.php");
+//AHPS notes report
 define("URL_AHPSNOTES","http://water.weather.gov/monitor/hydronote_report.php");
+//HADS USGS-NWSLID crosswalk table
 define("URL_HADSIDLOOKUP","http://www.nws.noaa.gov/oh/hads/USGS/");
+//Base URL for usgs instant value web service
 define("URL_USGSINSTANTVAL","http://waterservices.usgs.gov/nwis/iv/");
+//Base URL for AHPS xml  data
 define("URL_AHPSXML","http://water.weather.gov/ahps2/hydrograph_to_xml.php");
 
-#Credentials if required in a private directory
+//Credentials if required in a private directory
 define("CREDENTIALS_FILE",PROJECT_ROOT."login.php");
 
 include_once(CREDENTIALS_FILE);

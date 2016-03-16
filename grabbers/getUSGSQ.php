@@ -16,13 +16,14 @@
  */
 
 
-/* Include config file for paths etc..... */
+/* Set the current directory */
 chdir(dirname(__FILE__));
 
 /* Include config file for paths etc..... */
 require_once('../config.inc.php');
 
 
+/* Kludge....USGS treats HG and HP both as water levels */
 $PECode= array(
       'EKLA2' => 'HP'
 );
@@ -92,7 +93,13 @@ foreach($siteInfo['sites'] as $nwslid=>$site){
 //Handle the command line arguments
 $opts = getoptreq('a:p:t:fl', array());
 
-$period = strtoupper($opts["p"]);
+if(!isset($opts["p"])){
+    $period = 'P1D';
+    $logger->log("No period defined, set to default 'P1D'",PEAR_LOG_INFO);
+}
+else{
+    $period = strtoupper($opts["p"]);
+}
 
 if(!isset($opts["a"])){
     $logger->log("No area defined to check! (eg: -a AK -p P1D -t RZ)",PEAR_LOG_WARNING);
@@ -121,7 +128,8 @@ else{
 }
 
 if(!isset($opts["t"])){
-   $typesource = 'RZ';
+    $logger->log("No type source defined, set to default 'RZ'",PEAR_LOG_INFO);
+    $typesource = 'RZ';
 }
 else{
    $typesource = strtoupper($opts["t"]);
@@ -140,7 +148,8 @@ else{
     $shefFile =  "SRAK58 PACR ".date('dHi')."\n";
     $shefFile .= "ACRRR3ACR \n";
     $shefFile .= "WGET DATA REPORT \n\n";
-    $logger->log("Shef File for SBN",PEAR_LOG_INFO);
+    $shefFile = SHEF_HEADER;
+    $logger->log("Shef File with Header",PEAR_LOG_INFO);
 }
 
 
@@ -215,8 +224,8 @@ foreach($usgs as $key => $value){
         }
         if(array_key_exists('HG',$data)){
 	    $PE = 'HG';
-	    if(isset($PECode[$siteid])) $PE = $PECode[$siteid];	
-            
+	    if(isset($PECode[$siteid])) $PE = $PECode[$siteid];
+
             $shefFile .= ".AR $siteid $obstime/$dc/".$PE."I".$typesource."Z ".$data['HG']['val']."\n";
             $linesInShef++;
         }
