@@ -28,9 +28,9 @@ $debug = false;
 $skipCols = array('recordTime','year','jday','hour','#');
 
 //Pear log package
-require_once 'Log.php';
+require_once (PROJECT_ROOT.'/resources/Pear/Log.php');
 //Pear cache_lite package
-require_once('Cache/Lite.php');
+require_once(PROJECT_ROOT.'/resources/Pear/Cache/Lite.php');
 
 
 /**
@@ -335,7 +335,7 @@ while ($row = $result->fetch_assoc()){
 
         }
 
-       
+
         if($hasData){
             if($recordTime > $latestRecord){
                 $latestRecord = $recordTime;

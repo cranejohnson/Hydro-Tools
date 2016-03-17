@@ -1,12 +1,12 @@
 <?php
 /**
- * Description: This script performs a soap request to isi-data to retrieve data for 
+ * Description: This script performs a soap request to isi-data to retrieve data for
  * the NPS indian river site.  The script would need to be modified for multiple sites.
- * 
  *
  *
  *
- * @package soap_request 
+ *
+ * @package soap_request
  * @author Crane Johnson <benjamin.johnson@noaa.gov>
  * @version 0.1
  */
@@ -18,7 +18,8 @@ chdir(dirname(__FILE__));
 require_once('../config.inc.php');
 $mysqli->select_db("aprfc");
 
-require_once 'Log.php';
+//Pear log package
+require_once (PROJECT_ROOT.'/resources/Pear/Log.php');
 
 /**
  * Flag to send data to AWIPS
@@ -109,13 +110,13 @@ $shefFile =  "SRAK58 PACR ".date('dHi')."\n";
 $shefFile .= "ACRRR3ACR \n";
 $shefFile .= "WGET DATA REPORT \n\n";
 
- 
+
 
 
 if(!preg_match('#<DocumentElement.+?>(.+)</DocumentElement>#',$response,$mat)){
     echo "No data";
     exit();
-}    
+}
 
 
 
@@ -126,11 +127,11 @@ $shefstring = '';
 /**
  * Process the data and create shef file
  */
- 
+
 $numshef = 0;
 foreach($matches[1] as $m){
 #    if(preg_match('#Level (ft)#',$m)){
-    if(1){   
+    if(1){
         $over = 'R';
         preg_match('#<Local_time>(.+)</Local_time>#',$m,$mat);
         $date = $mat[1];
@@ -143,8 +144,8 @@ foreach($matches[1] as $m){
         $shefFile .= "HGIRZZ ".$value."/\n";
         echo ".A$over WSAA2 ". date('ymd \Z \D\HHi',strtotime($date)+$adjust)."/$dc/HGIRZZ ".$value."/\n\n";
         $numshef++;
-    }            
-}    
+    }
+}
 
 $logger->log("$numshef messages decoded with soap request",PEAR_LOG_INFO);
 ##############Output Shef File#####################################
@@ -167,7 +168,7 @@ if($sendshef == 0){
 file_put_contents(TO_LDAD.$fileName, $shefFile);
 
 $logger->log("END",PEAR_LOG_INFO);
-    
 
-   
+
+
  ?>

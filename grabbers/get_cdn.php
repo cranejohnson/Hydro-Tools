@@ -22,9 +22,9 @@ require_once('../config.inc.php');
 $mysqli->select_db("aprfc");
 
 //Pear log package
-require_once 'Log.php';
+require_once (PROJECT_ROOT.'/resources/Pear/Log.php');
 //Pear cache_lite package
-require_once('Cache/Lite.php');
+require_once(PROJECT_ROOT.'/resources/Pear/Cache/Lite.php');
 
 /**
  * Setup PEAR logging utility

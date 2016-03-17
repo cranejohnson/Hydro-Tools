@@ -1,11 +1,11 @@
 <?php
 /**
- * Description: This script downloads NOAA storm surge predictions for Alaska and 
- * parses the data into SHEF format, drops the data into the shef ingest folder for 
+ * Description: This script downloads NOAA storm surge predictions for Alaska and
+ * parses the data into SHEF format, drops the data into the shef ingest folder for
  * AWIPS.
  *
  *
- * @package get_noaa_storm_surge 
+ * @package get_noaa_storm_surge
  * @author Crane Johnson <benjamin.johnson@noaa.gov>
  * @version 0.1
  */
@@ -18,9 +18,9 @@ $mysqli->select_db("aprfc");
 
 
 //Pear log package
-require_once 'Log.php';
+require_once (PROJECT_ROOT.'/resources/Pear/Log.php');
 //Pear cache_lite package
-require_once('Cache/Lite.php');
+require_once(PROJECT_ROOT.'/resources/Pear/Cache/Lite.php');
 
 
 
@@ -44,7 +44,7 @@ define('DATE_COL',0);
 $sites = array(
 	'aknome' => array(
 		'name' => 'Nome, AK',
-		'NWS'  => 'NMTA2'),		
+		'NWS'  => 'NMTA2'),
 	'akseld' => array(
 		'name' => 'Seldovia, AK',
 		'NWS' =>  'OVIA2'),
@@ -91,7 +91,7 @@ $sites = array(
 		'name' => 'Prudhoe Bay, AK',
 		'NWS'  => 'PRDA2'));
 
-	
+
 
 function get_noaa_data($site,$logger) {
 	$shefcode = 'HM';
@@ -110,7 +110,7 @@ function get_noaa_data($site,$logger) {
 	$lines = explode("\n",$matches[1]);
 
 	/* Process each line and convert the time to unix time.
-	 * Populate a results array that contains [unix_time] -> Total Water Level 
+	 * Populate a results array that contains [unix_time] -> Total Water Level
 	 */
 
 	foreach($lines as $line){
@@ -125,7 +125,7 @@ function get_noaa_data($site,$logger) {
 		$results[$date][$shefcode] = $pred_TWL;
 	}
 	if(count($results) == 0) return false;
-	return $results;	
+	return $results;
 }
 
 function array_to_shef($site,$dataarray,$overWrite = false){
@@ -138,8 +138,8 @@ function array_to_shef($site,$dataarray,$overWrite = false){
 		foreach($values as $shefcode => $val){
 			$shefStr .= $shefcode."IFZZ ".trim($val)."/";
 		}
-		$shefStr .= "\n";	
-	}	
+		$shefStr .= "\n";
+	}
 	return $shefStr;
 }
 
@@ -147,7 +147,7 @@ function array_to_shef($site,$dataarray,$overWrite = false){
 /**
  *
  * 	MAIN PROGRAM LOGIC
- */ 
+ */
 
 $shefFile =  "SRAK58 PACR\n";
 $shefFile .= "ACRRR3ACR ".date('Hi')."\n";
@@ -155,7 +155,7 @@ $shefFile .= "WGET DATA REPORT\n\n";
 
 foreach($sites as $site => $id){
 	$data =  get_noaa_data($site,$logger);
-	$logger->log("Retrieved ".count($data)." hours of data from ".$site." (".$id['name'].")",PEAR_LOG_DEBUG);	
+	$logger->log("Retrieved ".count($data)." hours of data from ".$site." (".$id['name'].")",PEAR_LOG_DEBUG);
 	$shef = array_to_shef($id['NWS'],$data,true);
 	$shefFile .= $shef;
 }
@@ -171,4 +171,4 @@ file_put_contents(TO_LDAD.$fileName, $shefFile);
 $logger->log("END",PEAR_LOG_INFO);
 
 ?>
-  
+

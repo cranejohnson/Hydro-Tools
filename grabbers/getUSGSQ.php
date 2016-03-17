@@ -76,6 +76,7 @@ if(LOG_TYPE == 'NULL'){
     $logger = Log::singleton('null');
 }
 
+$logger->log("START",PEAR_LOG_INFO);
 
 /* Get the Statewide table of gages from HADS*/
 $siteInfo = getHADS_NWSLID_Lookup('ALL',3600);
@@ -245,6 +246,6 @@ if (!file_exists(TO_LDAD)) {
 
 if ($linesInShef) file_put_contents(TO_LDAD.$fileName, $shefFile);
 file_put_contents('getUSGSQ.state',json_encode($lastUpdate));
-$logger->log("Complete",PEAR_LOG_INFO);
+$logger->log("END",PEAR_LOG_INFO);
 
 ?>

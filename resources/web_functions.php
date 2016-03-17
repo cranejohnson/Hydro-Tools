@@ -1,7 +1,6 @@
 <?php
 
 //Pear cache_lite package
-//require_once('Cache/Lite.php');
 require_once(PROJECT_ROOT.'/resources/Pear/Cache/Lite.php');
 
 

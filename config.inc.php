@@ -4,13 +4,8 @@ ini_set('memory_limit', '512M');
 set_time_limit(300);
 date_default_timezone_set('UTC');
 
-
-
 #This file defines global constants that are used for scripts to simplify global changes.
 #Every script that uses this should 'require_once('pathto/config.inc.php');
-
-
-
 
 //Options 'FILE'  - File Logging
 //        'DB'    - Log to mysql database
@@ -25,7 +20,7 @@ date_default_timezone_set('UTC');
 //    message     VARCHAR(200),
 //    PRIMARY KEY (id)
 // );
-define("LOG_TYPE","DB");
+define("LOG_TYPE","FILE");
 define("SHEF_HEADER","SRAK58 PACR ".date('dHi')."\nACRRR3ACR \nWGET DATA REPORT \n\n");
 
 

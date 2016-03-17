@@ -20,10 +20,10 @@ define("IMAGE_OUTPUT","/hd1apps/data/intranet/html/tools/gagecompare/ahps_usgs_g
 #define("IMAGE_OUTPUT","ahps_usgs_graphs/");
 
 //Pear log package
-include_once('Log.php');
-
+require_once (PROJECT_ROOT.'/resources/Pear/Log.php');
 //Pear cache_lite package
-require_once('Cache/Lite.php');
+require_once(PROJECT_ROOT.'/resources/Pear/Cache/Lite.php');
+
 
 /* Web Function Library */
 require_once(RESOURCES_DIRECTORY."web_functions.php");
@@ -322,7 +322,7 @@ foreach($siteInfo['sites'] as $nws => $site){
           }
         }
     }
-    
+
     //Find the difference between all USGS and AHPS stages where readings are concurrent
     if($USGS_HG && $AHPS_HG){
         $stageDiff = findDiff($ahps[$nws]['data'],$usgs[$index]['data'],'HG');
