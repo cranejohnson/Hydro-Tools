@@ -35,9 +35,9 @@ require_once(RESOURCES_DIRECTORY."web_functions.php");
 ini_set('memory_limit', '512M');
 
 //Pear log package
-require_once 'Log.php';
+require_once (PROJECT_ROOT.'/resources/Pear/Log.php');
 //Pear cache_lite package
-require_once('Cache/Lite.php');
+require_once(PROJECT_ROOT.'/resources/Pear/Cache/Lite.php');
 
 
 /**
