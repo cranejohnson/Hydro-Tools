@@ -20,7 +20,7 @@ date_default_timezone_set('UTC');
 //    message     VARCHAR(200),
 //    PRIMARY KEY (id)
 // );
-define("LOG_TYPE","FILE");
+define("LOG_TYPE","DB");
 define("SHEF_HEADER","SRAK58 PACR ".date('dHi')."\nACRRR3ACR \nWGET DATA REPORT \n\n");
 
 
