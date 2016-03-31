@@ -273,16 +273,20 @@ foreach($siteInfo['sites'] as $nws => $site){
      //Get the most recent values for both USGS and AHPS
     $lastUSGS =array();
     $lastAHPS =array();
+    $lastAHPSDate;
+    $lastUSGSDate;
 
 
     if(isset($usgs[$index]['data'])){
         $lastUSGS = end($usgs[$index]['data']);
+        $lastUSGSDate = key($usgs[$index]['data']);
         reset($usgs[$index]['data']);
     }
 
     if(isset($ahps[$nws]['data'])){
         $datemin = key($ahps[$nws]['data']);
         $lastAHPS = end($ahps[$nws]['data']);
+        $lastAHPSDate = key($ahps[$nws]['data']);
         reset($ahps[$nws]['data']);
     }
 
@@ -293,19 +297,25 @@ foreach($siteInfo['sites'] as $nws => $site){
     $AHPS_HG = False;
     $AHPS_QR = False;
 
-    if(array_key_exists('HG',$lastUSGS) && ($lastUSGS['HG']['q'] == "P")){
-        $USGS_HG = True;
-    }
-    if(array_key_exists('QR',$lastUSGS) && ($lastUSGS['QR']['q'] == "P")){
-        $USGS_QR = True;
-    }
-    if(array_key_exists('QR',$lastAHPS)){
-        $AHPS_QR = True;
-    }
-    if(array_key_exists('HG',$lastAHPS)){
-        $AHPS_HG = True;
+    #If last ob is less than 24 hours old check 
+    if((time()-$lastUSGSDate)<86400){ 
+        if(array_key_exists('HG',$lastUSGS) && ($lastUSGS['HG']['q'] == "P")){
+            $USGS_HG = True;
+        }
+        if(array_key_exists('QR',$lastUSGS) && ($lastUSGS['QR']['q'] == "P")){
+            $USGS_QR = True;
+        }
     }
 
+    #If last ob is less than 24 hours old check 
+    if((time()-$lastAHPSDate)<86400){ 
+        if(array_key_exists('QR',$lastAHPS)){
+            $AHPS_QR = True;
+        }
+        if(array_key_exists('HG',$lastAHPS)){
+            $AHPS_HG = True;
+        }
+    }
 
     //Get the latest Stage Values for NWS and USGS
     $stagetxt = '';
