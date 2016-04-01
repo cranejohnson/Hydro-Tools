@@ -373,8 +373,8 @@ foreach($siteInfo['sites'] as $nws => $site){
 
     if(!$USGS_HG && $AHPS_HG){
         if(!isset($usgs[$index])){
-            $logger->log("NWS publishing stage and USGS $index is not valid ".$nws,PEAR_LOG_ERR);
-            $jsonError['sites'][$nws][] = "NWS publishing stage and USGS $index is not valid $nws";
+            $logger->log("NWS publishing stage and no data available for USGS $index for site:".$nws,PEAR_LOG_ERR);
+            $jsonError['sites'][$nws][] = "NWS publishing stage and no data available for USGS $index";
         }elseif($usgs[$index]['inService']){
             $logger->log("NWS publishing stage and USGS site is not: ".$nws,PEAR_LOG_ERR);
             $jsonError['sites'][$nws][] = "NWS publishing stage and USGS is not";
