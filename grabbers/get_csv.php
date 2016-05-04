@@ -141,7 +141,7 @@ function returnShefString($data,$over = true){
 
     foreach($data['data'] as $pe => $value){
         #Kludge below to handle river data in a file that contains all reservoir data
-        if($data['lid'] == 'KPHA2') $pe = 'HG';
+        if($data['lid'] == 'KPHA2' && $pe =='HP') $pe = 'HG';
         $string .= ".A$R ".$data['lid']." ".$data['recordTime']."/".$data['dcTime'];
         $string .= "/".$pe."I".$data['typeSource']."Z ".$value;
         $string .= "\n";
