@@ -103,8 +103,9 @@ else{
 }
 
 if(!isset($opts["a"])){
-    $logger->log("No area defined to check! (eg: -a AK -p P1D -t RZ)",PEAR_LOG_WARNING);
-    exit;
+    $logger->log("No area defined to check! (eg: -a AK -p P1D -t RZ)",PEAR_LOG_INFO);
+    $location = 'AK';
+    $logger->log("No area defined, set to default 'AK'",PEAR_LOG_INFO);
 }
 else{
     if(strlen($opts["a"]) == 2){
