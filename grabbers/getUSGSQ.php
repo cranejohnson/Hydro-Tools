@@ -85,7 +85,6 @@ $siteInfo = getHADS_NWSLID_Lookup('ALL',3600);
 /* Develop a lookup table between the USGS id and NWSLID */
 
 $lookup = array();
-
 foreach($siteInfo['sites'] as $nwslid=>$site){
     $lookup[$site['usgs']] = $nwslid;
     }
@@ -111,10 +110,18 @@ else{
     if(strlen($opts["a"]) == 2){
         $location = strtoupper($opts["a"]);
     }
-    elseif(strlen($opts["a"]) == 5){
+    elseif(strlen($opts["a"]) >= 5){
+        $nwsLocations = explode(',',strtoupper($opts["a"]));
+        $usgsArray = array();
+        foreach($nwsLocations as $nwslid){
+            if(array_search($nwslid,$lookup)){
+                $usgsArray[] = array_search($nwslid,$lookup);
+            }
+        }
+        $location = implode(',',$usgsArray);    
         //Location is an NWSLID
-        $nwslid = strtoupper($opts["a"]);
-        $location = array_search($nwslid,$lookup); // Look up the usgs id based on the NWSLID
+        //$nwslid = strtoupper($opts["a"]);
+        //$location = array_search($nwslid,$lookup); // Look up the usgs id based on the NWSLID
     }
     else{
         $logger->log("A State or NWSLID was not specified",PEAR_LOG_ERR);
