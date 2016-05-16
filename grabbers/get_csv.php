@@ -136,14 +136,25 @@ function returnShefString($data,$over = true){
     $R = '';
     if($over) $R = 'R';
     $string = '';
-
+     
+ 
 
 
     foreach($data['data'] as $pe => $value){
         #Kludge below to handle river data in a file that contains all reservoir data
         if($data['lid'] == 'KPHA2' && $pe =='HP') $pe = 'HG';
+
+        $dataElement = '';
+        if(strlen($pe)>2){
+            #Type source is in PE code
+            $dataElement = $pe;
+        }
+        #else use the main type source for the site 
+        else{   
+            $dataElement = $pe."I".$data['typeSource']."Z";
+        }    
         $string .= ".A$R ".$data['lid']." ".$data['recordTime']."/".$data['dcTime'];
-        $string .= "/".$pe."I".$data['typeSource']."Z ".$value;
+        $string .= "/".$dataElement." ".$value;
         $string .= "\n";
 
     }
@@ -298,6 +309,7 @@ while ($row = $result->fetch_assoc()){
             $code = trim($decodes[$i]);
             #if($debug) echo $code;
 
+            #If the code is for idLookup process to get the id based on the idLookup field   
             if($code == 'idLookup'){
                 if(array_key_exists($data[$i],$idLookup)){
                     if ($debug) echo "id lookup: ".$idLookup[$data[$i]]."\n";
@@ -309,12 +321,13 @@ while ($row = $result->fetch_assoc()){
                 continue;   #Go to next data value
             }
 
+            #If the code is a skip column character move on to the next value in the data string
             if(in_array($code,$skipCols)){
 
                 continue;   #Go to next data value
             }
 
-
+            #If there is no value move on the the next value in the data string
             if(!isset($data[$i])){
                 continue;   #Go to next data value
             }
@@ -323,8 +336,13 @@ while ($row = $result->fetch_assoc()){
             #if($debug) echo $value;
             #If the value is null replace it with missing
             if($value == 'NULL') $value = -9999;
-
-            $pe = substr($code,0,2);
+ 
+            preg_match('/[^\[]*/',$code,$peMatch);
+                
+            $pe = $peMatch[0];
+            
+            
+            #$pe = substr($code,0,2);
 
             #Get the unit conversion and convert data if required
             preg_match('/\[(.+)\]/',$code,$match);
@@ -348,7 +366,7 @@ while ($row = $result->fetch_assoc()){
             $numLines++;
             $siteLines++;
             if(isset($shefData['data'])) $shefFile .= returnShefString($shefData,false);
-            if($debug) echo "Shef String: ".returnShefString($shefData,true);
+            if($debug) echo "\nShef String: ".returnShefString($shefData,true);
         }
 
     }
@@ -358,7 +376,7 @@ while ($row = $result->fetch_assoc()){
 
 
 
-if($debug) exit;
+
 
 ##############Output Shef File#####################################
 $fileName = "sheffile.hd.csv.".date('ymdHi');
@@ -366,6 +384,8 @@ $fileName = "sheffile.hd.csv.".date('ymdHi');
 
 /* Write the file to the local temporary location */
 file_put_contents(TEMP_DIRECTORY.$fileName, $shefFile);
+
+if($debug) exit;
 
 if($numLines == 0){
 	$logger->log("No sites to ingest into AWIPS.",PEAR_LOG_INFO);
