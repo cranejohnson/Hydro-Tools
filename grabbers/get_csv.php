@@ -25,7 +25,7 @@ $mysqli->select_db("aprfc");
 
 $debug = false;
 
-$skipCols = array('recordTime','year','jday','hour','#');
+$skipCols = array('recordTime','year','jday','hour','date','time','#');
 
 //Pear log package
 require_once (PROJECT_ROOT.'/resources/Pear/Log.php');
@@ -107,19 +107,6 @@ function convert($val,$conv){
 
 
 
-$logger->log("START",PEAR_LOG_INFO);
-
-$shefFile =  "SRAK58 PACR ".date('dHi')."\n";
-$shefFile .= "ACRRR3ACR \n";
-$shefFile .= "WGET DATA REPORT \n\n";
-
-$numLines = 0;
-
-
-$over = 'R';
-$query = "select id,lid,timezone,headerLines,commentLines,typeSource,url,decodes,lastIngest,active,readLines,ingestInterval,lastRecordDatetime,idLookup from csvIngest where active = 1";
-
-$result = $mysqli->query($query) or die($mysqli->error);
 
 
 #Get the date from a jday and year
@@ -162,6 +149,21 @@ function returnShefString($data,$over = true){
 }
 
 
+$logger->log("START",PEAR_LOG_INFO);
+
+#Setup shef product file
+$shefFile =  "SRAK58 PACR ".date('dHi')."\n";
+$shefFile .= "ACRRR3ACR \n";
+$shefFile .= "WGET DATA REPORT \n\n";
+
+$numLines = 0;
+
+$over = 'R';
+$query = "select delimiter,id,lid,timezone,headerLines,commentLines,typeSource,url,decodes,lastIngest,active,readLines,ingestInterval,lastRecordDatetime,idLookup from csvIngest where active = 1";
+
+$result = $mysqli->query($query) or die($mysqli->error);
+
+
 
 # Procces each site in the configuration table
 while ($row = $result->fetch_assoc()){
@@ -172,6 +174,9 @@ while ($row = $result->fetch_assoc()){
     //Rows beginning with the comment characters are skipped
     $comments = explode(',',$row['commentLines']);
 
+    //File delimiter
+    $dataDelimiter = $row['delimiter'];
+    
     #Get the time correction and ingest interval
     $timeCorrection = -($row['timezone']*3600);
     $interval = strtotime("2014-1-1 ".$row['ingestInterval']) -strtotime("2014-1-1 00:00:00");
@@ -257,7 +262,7 @@ while ($row = $result->fetch_assoc()){
         $line = str_replace('"', "",$line);
         $line = str_replace("'", "",$line);
 
-        $data = explode(',',trim($line));
+        $data = explode($dataDelimiter,trim($line));
 
 
 
