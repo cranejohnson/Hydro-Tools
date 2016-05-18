@@ -23,9 +23,17 @@ chdir(dirname(__FILE__));
 require_once('../config.inc.php');
 
 
+/* Kludge to get additional lookups into table 
+   These are sites that would not be included in the 
+   HADS lookup tables */
+   
+$customLookup = array( 1505248590 => 'JSBA2');
+
+
 /* Kludge....USGS treats HG and HP both as water levels */
 $PECode= array(
-      'EKLA2' => 'HP'
+      'EKLA2' => 'HP',
+      'JSBA2' => 'HP'
 );
 
 
@@ -89,6 +97,10 @@ foreach($siteInfo['sites'] as $nwslid=>$site){
     $lookup[$site['usgs']] = $nwslid;
     }
 
+foreach($customLookup as $usgs => $nwslid){
+   $lookup[$usgs] = $nwslid;
+}   
+
 
 //Handle the command line arguments
 $opts = getoptreq('a:p:t:fl', array());
@@ -114,14 +126,12 @@ else{
         $nwsLocations = explode(',',strtoupper($opts["a"]));
         $usgsArray = array();
         foreach($nwsLocations as $nwslid){
-            if(array_search($nwslid,$lookup)){
+           
+            if(array_search($nwslid,$lookup)){                
                 $usgsArray[] = array_search($nwslid,$lookup);
             }
         }
         $location = implode(',',$usgsArray);    
-        //Location is an NWSLID
-        //$nwslid = strtoupper($opts["a"]);
-        //$location = array_search($nwslid,$lookup); // Look up the usgs id based on the NWSLID
     }
     else{
         $logger->log("A State or NWSLID was not specified",PEAR_LOG_ERR);
