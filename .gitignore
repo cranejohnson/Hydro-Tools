@@ -1,13 +1,8 @@
 login.php
-breakupDB/*.json
-private/*
 cache/*
 logs/*
 tmp/*
-web/*
-ahps_usgs_compare/*/*.png
 *.json
 TO_LDAD/*
 push2Ldad.php
-usgs_meta_check/*.html
 getUSGSQ.state
