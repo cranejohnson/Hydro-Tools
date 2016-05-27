@@ -329,7 +329,8 @@ $password = GMAIL_PASSWORD;
 
 #//Which folders or label do you want to access? - Example: INBOX, All Mail, Trash, labelname
 #//Note: It is case sensitive
-$imapmainbox = "iridium_NWS_ingest";
+#$imapmainbox = "iridium_NWS_ingest";
+$imapmainbox = GMAIL_MAILBOX;
 $messagestatus = "ALL";
 
 
@@ -402,7 +403,7 @@ if($emails){
 			$query = "select lid,datatable,imei,decoder,zerostage,ingest,peCode,typeSource from iGageinfo where imei = $imei and ingest = 1 ";
 			$result = $mysqli->query($query);
 			if($result->num_rows == 0){
-				$logger->log("No site information in database for imei: $imei",PEAR_LOG_NOTICE);
+				$logger->log("No active site in database for imei: $imei",PEAR_LOG_NOTICE);
 			}
 			else{
 				$row = $result->fetch_array();
