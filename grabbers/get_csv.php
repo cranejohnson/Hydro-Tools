@@ -283,7 +283,11 @@ while ($row = $result->fetch_assoc()){
             $recordTime = strtotime($data[$dateField])+$timeCorrection;
         }
 
-
+        if($recordTime > (time()+86400)) {
+            #This is a bogus record....continue to the next line
+            $logger->log("Line of data from {$row['lid']} is in the future: ".date('ymd \Z \D\HHi',$recordTime),PEAR_LOG_WARNING);
+            continue;
+         }   
 
         $shefData['lid'] = $row['lid'];
         $shefData['typeSource'] = $row['typeSource'];
