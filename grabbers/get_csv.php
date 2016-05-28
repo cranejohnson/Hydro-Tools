@@ -205,7 +205,7 @@ while ($row = $result->fetch_assoc()){
     $logger->log("File size of ".strlen($csvFile)." for {$row['lid']}",PEAR_LOG_DEBUG);
 
     if(!$debug){
-        $q = "update csvIngest set lastIngest = '".date('Y-m-d H:i:s')."' where lid = '{$row['lid']}'";
+        $q = "update csvIngest set lastIngest = '".date('Y-m-d H:i:s')."' where id = '{$row['id']}'";
         $mysqli->query($q) or die($mysqli->error);
     }
 
@@ -382,7 +382,7 @@ while ($row = $result->fetch_assoc()){
             }
 
             #Update the csv data table with the most recently record time so that only new data is pushed over to LDAD.
-            $q = "update csvIngest set lastRecordDatetime = '".date('Y-m-d H:i:s',$latestRecord)."' where lid = '{$row['lid']}'";
+            $q = "update csvIngest set lastRecordDatetime = '".date('Y-m-d H:i:s',$latestRecord)."' where id = '{$row['id']}'";
             if (!$debug) $mysqli->query($q) or die($mysqli->error);
             $numLines++;
             $siteLines++;
