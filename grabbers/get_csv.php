@@ -72,7 +72,7 @@ if(LOG_TYPE == 'NULL'){
 
 function convert($val,$conv){
 
-       $parts = explode("-",$conv);
+       $parts = explode(":",$conv);
 
        if($parts[0] == 'add'){
            $val = $val+$parts[1];
@@ -80,25 +80,28 @@ function convert($val,$conv){
        if($parts[0] == 'sub'){
            $val = $val-$parts[1];
        }
-       if ($conv == 'm-ft'){
+       if($parts[0] == '0gage'){
+           $val = $parts[1]-$val;
+       }
+       if ($conv == 'm:ft'){
             $val = $val*3.28083;
         }
-       if ($conv == 'cms-cfs'){
+       if ($conv == 'cms:cfs'){
             $val = $val*35.314662;
         }
-       if ($conv == 'c-f'){
+       if ($conv == 'c:f'){
             $val = ($val*1.8)+32;
         }
-       if ($conv == 'mm-in'){
+       if ($conv == 'mm:in'){
             $val = ($val*0.0393701);
         }
-        if ($conv == 'cm-in'){
+        if ($conv == 'cm:in'){
             $val = ($val*0.3937);
         }
-        if ($conv == 'knots-mph'){
+        if ($conv == 'knots:mph'){
             $val = ($val*1.1508);
         }
-        if ($conv == 'mps-mph'){
+        if ($conv == 'mps:mph'){
             $val = ($val*2.237);
 	}
 
@@ -159,7 +162,7 @@ $shefFile .= "WGET DATA REPORT \n\n";
 $numLines = 0;
 
 $over = 'R';
-$query = "select delimiter,id,lid,timezone,headerLines,commentLines,typeSource,url,decodes,lastIngest,active,readLines,ingestInterval,lastRecordDatetime,idLookup from csvIngest where active = 1";
+$query = "select delimiter,id,lid,timezone,headerLines,commentLines,typeSource,url,decodes,lastIngest,active,readLines,ingestInterval,lastRecordDatetime from csvIngest where active = 1";
 
 $result = $mysqli->query($query) or die($mysqli->error);
 
@@ -167,8 +170,7 @@ $result = $mysqli->query($query) or die($mysqli->error);
 
 # Procces each site in the configuration table
 while ($row = $result->fetch_assoc()){
-    #if($row['lid'] != 'LOWA2') continue;
-
+    
     $latestRecord = 0;
 
     //Rows beginning with the comment characters are skipped
@@ -228,13 +230,19 @@ while ($row = $result->fetch_assoc()){
     }
 
     $idLookup = array();
-    if (in_array('idLookup',$decodes)){
-        $temp = explode(',',$row['idLookup']);
-        foreach ($temp as $a) {
-            $b = explode('|', $a);
-            $idLookup[trim($b[0])] = trim($b[1]);
-        }
+    if(preg_match('/idLookup\((.*?)\)/',$row['decodes'],$match)){
+        $pairs = explode(':',$match[1]);
+        foreach($pairs as $pair){
+            $keyval = explode('|',$pair);
+            $idLookup[$keyval[0]] = $keyval[1];
+        } 
     }
+
+    if(($row['lid'] == 'MULTI') && (count($idLookup)==0)){
+        $logger->log("MULTI site with no lookup sites defined!!!",PEAR_LOG_ERR);
+        continue;
+    }    
+        
     if($debug){
         echo "idLookup\n";
         print_r($idLookup);
@@ -322,7 +330,8 @@ while ($row = $result->fetch_assoc()){
             #if($debug) echo $code;
 
             #If the code is for idLookup process to get the id based on the idLookup field   
-            if($code == 'idLookup'){
+            if(preg_match('/idLookup/',$code,$match)){
+#            if($code == 'idLookup'){
                 if(array_key_exists($data[$i],$idLookup)){
                     if ($debug) echo "id lookup: ".$idLookup[$data[$i]]."\n";
                     $shefData['lid'] = $idLookup[$data[$i]];
