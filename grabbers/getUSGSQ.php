@@ -2,7 +2,7 @@
 /**
  * Php script to download and shef encode USGS discharge data.
  *
- * Example usage ' php getUSGSQ.php AK PT2H RZ'
+ * Example usage ' php getUSGSQ.php -a AK -p P1D -t RZ'
  *       Get data for Alaska the last 2 hours and set typesource as RZ
  *
  * The lastUpdate state is stored in a local file getUSGSQ.state
@@ -164,9 +164,6 @@ if(isset($opts["l"])){
 }
 else{
     $fileName = "sheffile.USGS.".date('ymdHi');
-    $shefFile =  "SRAK58 PACR ".date('dHi')."\n";
-    $shefFile .= "ACRRR3ACR \n";
-    $shefFile .= "WGET DATA REPORT \n\n";
     $shefFile = SHEF_HEADER;
     $logger->log("Shef File with Header",PEAR_LOG_INFO);
 }
@@ -194,22 +191,64 @@ else{
     $logger->log("No state file. Will create one.",PEAR_LOG_INFO);
 }
 
-#.AR BGDA2 150320 Z DH2129/DC1503202129/VBIRZZ 7.53/
+function calculate_median($arr) {
+    sort($arr);
+    $count = count($arr); //total numbers in array
+    $middleval = floor(($count-1)/2); // find the middle value, or the lowest middle value
+    if($count % 2) { // odd number, middle is the median
+        $median = $arr[$middleval];
+    } else { // even number, calculate avg of 2 medians
+        $low = $arr[$middleval];
+        $high = $arr[$middleval+1];
+        $median = (($low+$high)/2);
+    }
+    return $median;
+}
+
+//Subroutine to find missing data in the USGS data object
+function findMissingUSGS($USGS){
+    $dataInt = array();
+    $missingDates = array();
+    ksort($USGS['data']);
+    reset($USGS['data']);
+    $lastDate = key($USGS['data']);
+    foreach($USGS['data'] as $recordTime=>$dataVal){
+        $dataInt[] = $recordTime - $lastDate;
+        $lastDate= $recordTime;
+    }
+     
+    $interval = calculate_median($dataInt);
+    ksort($USGS['data']);
+    reset($USGS['data']);
+    $lastDate = key($USGS['data']);    
+    foreach($USGS['data'] as $recordTime=>$dataVal){
+        while(($recordTime - $lastDate) > $interval){
+            $missingDates[] = $lastDate + $interval;
+            $lastDate = $lastDate + $interval;
+        }
+        $lastDate = $lastDate + $interval;
+    }        
+    return $missingDates;
+}    
+
 
 
 
 $numSites = 0;
 $linesInShef = 0;
 
+//Loop through and process each site
 foreach($usgs as $key => $value){
 
     $siteid = 'Empty';
+    
+    //Continue to the next site if we don't have a usgs to nwslid conversion
     if(!isset($lookup[$key])) continue;
     $numSites++;
     $siteid = $lookup[$key];
 
-
     if(!isset($value['data'])) continue;
+    findMissingUSGS($value);
     foreach ($value['data'] as $datekey=>$data){
         $str = '';
         if ($datekey == 'name') continue;
