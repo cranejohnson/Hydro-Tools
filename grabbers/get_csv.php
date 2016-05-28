@@ -189,6 +189,7 @@ while ($row = $result->fetch_assoc()){
 
     #Download the CSV file
     $logger->log("Fetching Data for {$row['lid']}",PEAR_LOG_INFO);
+    $logger->log("Url:  {$row['url']}",PEAR_LOG_INFO);
     if($debug) echo "Fetching Data for {$row['lid']}\n";
     $shefStr = '';
     $csvFile = trim(file_get_contents($row['url']));
@@ -242,6 +243,7 @@ while ($row = $result->fetch_assoc()){
 
     #Process each line of the csv data file
     $siteLines = 0;
+    $numSkip = 0;
     foreach($lineArray as $line){
         $shefData = array();
         $recordTime;
@@ -283,9 +285,10 @@ while ($row = $result->fetch_assoc()){
             $recordTime = strtotime($data[$dateField])+$timeCorrection;
         }
 
+        
         if($recordTime > (time()+86400)) {
             #This is a bogus record....continue to the next line
-            $logger->log("Line of data from {$row['lid']} is in the future: ".date('ymd \Z \D\HHi',$recordTime),PEAR_LOG_WARNING);
+            $numSkip++;
             continue;
          }   
 
@@ -379,6 +382,8 @@ while ($row = $result->fetch_assoc()){
         }
 
     }
+
+    if($numSkip) $logger->log("$numSkip lines of data from {$row['lid']} skipped because the data is in the future",PEAR_LOG_WARNING);
 
     $logger->log("$siteLines lines processed for  {$row['lid']}",PEAR_LOG_INFO);
 }
