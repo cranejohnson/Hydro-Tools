@@ -266,7 +266,7 @@ function getUSGS($period,$location){
 
     $url = URL_USGSINSTANTVAL;
     $url .= "?format=waterml,1.1";
-    $url .= "&period=$period&parameterCd=00060,00065&siteStatus=active";
+    $url .= "&period=$period&parameterCd=00060,00065";
 
 
 
