@@ -36,6 +36,10 @@ $PECode= array(
       'JSBA2' => 'HP'
 );
 
+$typeSource= array(
+      'MXYA2' => 'R2'
+);
+
 
 /* Web Function Library */
 require_once(RESOURCES_DIRECTORY."web_functions.php");
@@ -283,6 +287,7 @@ foreach($usgs as $key => $value){
         if(array_key_exists('HG',$data)){
 	    $PE = 'HG';
 	    if(isset($PECode[$siteid])) $PE = $PECode[$siteid];
+        if(isset($typeSource[$siteid])) $typesource = $typeSource[$siteid];
 
             $shefFile .= ".AR $siteid $obstime/$dc/".$PE."I".$typesource."Z ".$data['HG']['val']."\n";
             $linesInShef++;
