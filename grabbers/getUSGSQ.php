@@ -163,7 +163,7 @@ $shefFile = '';
 //Check if the -l (local) option is flagged
 //if not add the correct header to the file.
 if(isset($opts["l"])){
-    $fileName = "USGSdischarge.".date('ymdHi');
+    $fileName = "USGSdischarge.".date('ymdHis');
     $logger->log("Local Shef File",PEAR_LOG_INFO);
 }
 else{
@@ -287,9 +287,11 @@ foreach($usgs as $key => $value){
         if(array_key_exists('HG',$data)){
 	    $PE = 'HG';
 	    if(isset($PECode[$siteid])) $PE = $PECode[$siteid];
-        if(isset($typeSource[$siteid])) $typesource = $typeSource[$siteid];
+	    $type = $typesource;
+	    if(isset($typeSource[$siteid])) $type = $typeSource[$siteid];
 
-            $shefFile .= ".AR $siteid $obstime/$dc/".$PE."I".$typesource."Z ".$data['HG']['val']."\n";
+
+            $shefFile .= ".AR $siteid $obstime/$dc/".$PE."I".$type."Z ".$data['HG']['val']."\n";
             $linesInShef++;
         }
 

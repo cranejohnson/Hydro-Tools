@@ -198,7 +198,8 @@ class Cache_Lite_Hydro extends Cache_Lite {
  */
 function getHADS_NWSLID_Lookup($state,$age=86400){
     global $logger;  //Global pear logger class
-
+    
+    $custom[] = 'JSBA2|1505248590       | |AJK| | |MENDENHALL LAKE AT SUICIDE BASIN';
     $textdata = '';
     $sites = array();
 
@@ -227,18 +228,20 @@ function getHADS_NWSLID_Lookup($state,$age=86400){
         //Remove the first four lines of the file that are header information and place
         // remaining lines into an array.
         $siteInfo = array_slice(explode("\n", $textdata), 4);
+        $siteInfo = array_merge($siteInfo,$custom);  
         $i=0;
         foreach($siteInfo as $site){
             $parts = explode("|",$site);
             if (count($parts) < 6) continue;
+            $i++;
             $sites['sites'][$parts[0]]['usgs'] =  trim($parts[1]);
             $sites['sites'][$parts[0]]['name'] = $parts[6];
             $sites['sites'][$parts[0]]['hsa'] = $parts[3];
             $vals = explode(' ',trim($parts[4]));
+	    if(count($vals) < 3) continue;
             $sites['sites'][$parts[0]]['lat'] = intval($vals[0])+(intval($vals[1])+intval($vals[2])/60)/60;
             $vals = explode(' ',trim($parts[5]));
             $sites['sites'][$parts[0]]['lon'] = intval($vals[0])+(intval($vals[1])+intval($vals[2])/60)/60;
-            $i++;
         }
 
 
