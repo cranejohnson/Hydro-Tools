@@ -193,6 +193,12 @@ if(!$location){
 
 $usgs = getUSGS($period,$location);
 
+if(!$usgs){
+    $logger->log("No USGS Data Exiting.",PEAR_LOG_ERR);
+    exit;
+}    
+    
+
 $lastUpdate = array();
 
 
