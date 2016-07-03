@@ -23,10 +23,10 @@ chdir(dirname(__FILE__));
 require_once('../config.inc.php');
 
 
-/* Kludge to get additional lookups into table 
-   These are sites that would not be included in the 
+/* Kludge to get additional lookups into table
+   These are sites that would not be included in the
    HADS lookup tables */
-   
+
 $customLookup = array( 1505248590 => 'JSBA2');
 
 
@@ -103,7 +103,7 @@ foreach($siteInfo['sites'] as $nwslid=>$site){
 
 foreach($customLookup as $usgs => $nwslid){
    $lookup[$usgs] = $nwslid;
-}   
+}
 
 
 //Handle the command line arguments
@@ -130,12 +130,12 @@ else{
         $nwsLocations = explode(',',strtoupper($opts["a"]));
         $usgsArray = array();
         foreach($nwsLocations as $nwslid){
-           
-            if(array_search($nwslid,$lookup)){                
+
+            if(array_search($nwslid,$lookup)){
                 $usgsArray[] = array_search($nwslid,$lookup);
             }
         }
-        $location = implode(',',$usgsArray);    
+        $location = implode(',',$usgsArray);
     }
     else{
         $logger->log("A State or NWSLID was not specified",PEAR_LOG_ERR);
@@ -196,8 +196,8 @@ $usgs = getUSGS($period,$location);
 if(!$usgs){
     $logger->log("No USGS Data Exiting.",PEAR_LOG_ERR);
     exit;
-}    
-    
+}
+
 
 $lastUpdate = array();
 
@@ -234,20 +234,20 @@ function findMissingUSGS($USGS){
         $dataInt[] = $recordTime - $lastDate;
         $lastDate= $recordTime;
     }
-     
+
     $interval = calculate_median($dataInt);
     ksort($USGS['data']);
     reset($USGS['data']);
-    $lastDate = key($USGS['data']);    
+    $lastDate = key($USGS['data']);
     foreach($USGS['data'] as $recordTime=>$dataVal){
         while(($recordTime - $lastDate) > $interval){
             $missingDates[] = $lastDate + $interval;
             $lastDate = $lastDate + $interval;
         }
         $lastDate = $lastDate + $interval;
-    }        
+    }
     return $missingDates;
-}    
+}
 
 
 
@@ -259,14 +259,14 @@ $linesInShef = 0;
 foreach($usgs as $key => $value){
 
     $siteid = 'Empty';
-    
+
     //Continue to the next site if we don't have a usgs to nwslid conversion
     if(!isset($lookup[$key])) continue;
     $numSites++;
     $siteid = $lookup[$key];
 
     if(!isset($value['data'])) continue;
-    
+
     foreach ($value['data'] as $datekey=>$data){
         $str = '';
         if ($datekey == 'name') continue;
@@ -279,13 +279,8 @@ foreach($usgs as $key => $value){
             if($datekey <= strtotime($lastUpdate[$siteid])){
                 if(!$force)continue;
             }
-            else{
-                $lastUpdate[$siteid] = date('c',$datekey);
-            }
         }
-        else{
-            $lastUpdate[$siteid] = date('c',$datekey);
-        }
+
 
         if(array_key_exists('QR',$data)){
 
@@ -306,6 +301,7 @@ foreach($usgs as $key => $value){
             $shefFile .= ".A".$shefReplace." $siteid $obstime/$dc/".$PE."I".$type."Z ".$data['HG']['val']."\n";
             $linesInShef++;
         }
+        $lastUpdate[$siteid] = date('c',$datekey);
     }
 }
 
@@ -328,7 +324,7 @@ if ($linesInShef) {
 }
 
 if(file_put_contents('getUSGSQ.state',json_encode($lastUpdate))){
-	$logger->log("USGS state file updated",PEAR_LOG_INFO);	
+	$logger->log("USGS state file updated",PEAR_LOG_INFO);
 }
 else{
 	$logger->log("USGS state file failed to updated!",PEAR_LOG_ERR);
