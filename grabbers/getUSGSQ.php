@@ -107,7 +107,7 @@ foreach($customLookup as $usgs => $nwslid){
 
 
 //Handle the command line arguments
-$opts = getoptreq('a:p:t:fl', array());
+$opts = getoptreq('a:p:t:flr', array());
 
 if(!isset($opts["p"])){
     $period = 'P1D';
@@ -150,6 +150,14 @@ else{
     $force = false;
 }
 
+#If -r set then add the 'R' to the shef string to replace existing data in DB
+if(isset($opts["r"])){
+    $shefReplace = 'R';
+}
+else{
+    $shefReplace = '';
+}
+
 if(!isset($opts["t"])){
     $logger->log("No type source defined, set to default 'RZ'",PEAR_LOG_INFO);
     $typesource = 'RZ';
@@ -167,7 +175,7 @@ if(isset($opts["l"])){
     $logger->log("Local Shef File",PEAR_LOG_INFO);
 }
 else{
-    $fileName = "sheffile.USGS.".date('ymdHi');
+    $fileName = "sheffile.USGS.".date('ymdHis');
     $shefFile = SHEF_HEADER;
     $logger->log("Shef File with Header",PEAR_LOG_INFO);
 }
@@ -252,7 +260,7 @@ foreach($usgs as $key => $value){
     $siteid = $lookup[$key];
 
     if(!isset($value['data'])) continue;
-    findMissingUSGS($value);
+    
     foreach ($value['data'] as $datekey=>$data){
         $str = '';
         if ($datekey == 'name') continue;
@@ -281,20 +289,17 @@ foreach($usgs as $key => $value){
             else{
                 $flow = floatval($data['QR']['val'])/1000;
             }
-            $shefFile .= ".AR $siteid $obstime/$dc/QRIRZZ ".$flow."\n";
+            $shefFile .= ".A".$shefReplace." $siteid $obstime/$dc/QRIRZZ ".$flow."\n";
             $linesInShef++;
         }
         if(array_key_exists('HG',$data)){
-	    $PE = 'HG';
-	    if(isset($PECode[$siteid])) $PE = $PECode[$siteid];
-	    $type = $typesource;
-	    if(isset($typeSource[$siteid])) $type = $typeSource[$siteid];
-
-
-            $shefFile .= ".AR $siteid $obstime/$dc/".$PE."I".$type."Z ".$data['HG']['val']."\n";
+            $PE = 'HG';
+            if(isset($PECode[$siteid])) $PE = $PECode[$siteid];
+            $type = $typesource;
+            if(isset($typeSource[$siteid])) $type = $typeSource[$siteid];
+            $shefFile .= ".A".$shefReplace." $siteid $obstime/$dc/".$PE."I".$type."Z ".$data['HG']['val']."\n";
             $linesInShef++;
         }
-
     }
 }
 
@@ -302,14 +307,27 @@ $logger->log("$numSites sites available in the USGS web services file.",PEAR_LOG
 $logger->log("$linesInShef lines in the USGS discharge shef file.",PEAR_LOG_INFO);
 
 
-
 //Setup Output Directory
 if (!file_exists(TO_LDAD)) {
     mkdir(TO_LDAD, 0777, true);
 }
 
-if ($linesInShef) file_put_contents(TO_LDAD.$fileName, $shefFile);
-file_put_contents('getUSGSQ.state',json_encode($lastUpdate));
+if ($linesInShef) {
+    if(file_put_contents(TO_LDAD.$fileName, $shefFile)){
+        $logger->log("File (".$fileName.") saved in LDAD directory",PEAR_LOG_INFO);
+    }
+    else{
+        $logger->log("Failed (".$fileName.")to save in TOLDAD directory...try again!",PEAR_LOG_ERR);
+    }
+}
+
+if(file_put_contents('getUSGSQ.state',json_encode($lastUpdate))){
+	$logger->log("USGS state file updated",PEAR_LOG_INFO);	
+}
+else{
+	$logger->log("USGS state file failed to updated!",PEAR_LOG_ERR);
+}
+
 $logger->log("END",PEAR_LOG_INFO);
 
 ?>
