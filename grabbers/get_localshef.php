@@ -1,7 +1,8 @@
 <?php
 /**
- * Description: This script gets iridium messages from the specified mailbox and
- * drops the data into the shef ingest folder for AWIPS. Shef data will only be ingested 
+ * Description: This script gets messages from the specified mailbox and
+ * drops the data into folder which then gets pushed over to AWIPS. 
+ * Shef data will only be ingested 
  * into the local RFC shef encoder.
  *
  * This scripts requires php5 IMAP support. This was installed on redrock with
@@ -70,7 +71,7 @@ if(LOG_TYPE == 'NULL'){
 
 /**
  *
- * 	MAIN PROGRAM LOGIC
+ *  MAIN PROGRAM LOGIC
  */
 
 $logger->log("END",PEAR_LOG_INFO);
@@ -100,7 +101,7 @@ $verbose = false;
 $mbox = imap_open($hostname, $username,$password);
 
 if(!$mbox){
-	$logger->log("Could not open sheffile inbox ($imapmainbox in account $username) aborting....",PEAR_LOG_ERR);
+    $logger->log("Could not open sheffile inbox ($imapmainbox in account $username) aborting....",PEAR_LOG_ERR);
         exit();
 }
 
@@ -119,42 +120,39 @@ $numnew =  imap_num_recent($mbox);
 ######Process each message
 $emails = imap_search($mbox,'ALL');
 if($emails){
-	arsort($emails); //JUST DO ARSORT
-	foreach($emails as $email_number) {
-		$sitedata = array();
-		$msgno = $email_number;
-		$text = "";
+    arsort($emails); //JUST DO ARSORT
+    foreach($emails as $email_number) {
+        $sitedata = array();
+        $msgno = $email_number;
+        $text = "";
         ######Get the message header information
         $header = imap_header($mbox,$msgno);
-        
-        
-		######Get the file name and parse out the datestamp
-		$att = imap_bodystruct($mbox,$msgno,2);
-                if($att){                         # no attached file continue to the next email
-			$file = $att->dparameters[0]->value;        # Native file format 100808210135.jpg
-			$imei = substr($file,0,15);
-		}
-		$struct = imap_fetchstructure($mbox,$msgno);
-		//$contentParts = count($struct->parts);
-		$fileContent = imap_fetchbody($mbox,$msgno,2);
         $data = ":From - ".$header->reply_toaddress."\n";
         $data .= ":Date - ".$header->date."\n";
-		$data .= base64_decode($fileContent);
-        $data = str_replace( "\r", "", $data);
+        
+        
+        ######Get the file name and parse out the datestamp
+        $string = imap_body($mbox,$msgno);
+        $lines = preg_split('/$\R?^/m', $string);
+        foreach($lines as $line){
+            $line = trim($line);
+            if(substr($line, 0, 3 ) === ".AR") $data .= $line."\n";
+        }
+
         imap_delete($mbox, $msgno);
         imap_expunge($mbox);
 
         if($data){
-            $filename = 'sheflocal'.date('ymdHi');
+            $filename = 'sheflocal.'.date('ymdHi');
             file_put_contents(TEMP_DIRECTORY.$filename, $data);
             if(file_put_contents(TO_LDAD.$filename, $data)){
-                $logger->log("Moved shef file from {$header->reply_toaddress} to LDAD",PEAR_LOG_INFO);
+                $logger->log("Moved shef data from {$header->reply_toaddress} to LDAD",PEAR_LOG_INFO);
             }    
         }  #If data loop
-		else{
-			$logger->log("No data file for imei: $imei",PEAR_LOG_DEBUG);
-		}
-	}
+        else{
+            $logger->log("No data file for imei: $imei",PEAR_LOG_DEBUG);
+        }
+    }
 }  #Outer if loop
 
 
