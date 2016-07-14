@@ -100,7 +100,7 @@ function decode_igage10($email_date,$data,$verbose,$zerostage){
     $rdate = strtotime("$year/$month/$day $hour:$minute");
     $sitedata['producttime'] = gmdate('Y-m-d H:i',$rdate);
 
-    #Kludge fix to corret when the time gets off
+    #Kludge fix to correct when the time gets off
         if(abs($rdate-(strtotime($email_date)))> (3600*1)){
         $sitedata['producttime'] = $email_date;
         echo "Update product time\n";
@@ -136,6 +136,81 @@ function decode_igage10($email_date,$data,$verbose,$zerostage){
     ###Calculate stage
      if($zerostage) $sitedata['calcstage']= sprintf("%0.2f",$zerostage - ($sitedata['distance'])/12);
     }
+    return $sitedata;
+}
+
+function decode_igage10adjust($email_date,$data,$verbose,$zerostage){
+
+    $slope = 0.0009;
+    $offset = 0.017;
+    $sitedata = array();
+    $datalength = strlen($data);
+    if($verbose) echo "Length: $datalength<br>";
+
+    ####Unpack and decode the data record time
+    #  Date/Time is formated in a compact 3 byte packet as follows
+    #
+    #  Byte 1      7654         month (1..12)
+    #                  3210     year % 10 (0..9)
+    #  Byte 2      765          3 LS bits of hour
+    #                 43210     day (1..31)
+    #  Byte 3      765432       minute (0..59)
+    #                    10     2 MS bits of hour
+    #
+
+    $timeb1 = unpack('C',substr($data,0,1));
+    $year = ((240 & $timeb1[1]) >> 4) + 2010;
+    $month = (15 & $timeb1[1]);
+    $timeint = unpack('S',substr($data,1,2));
+    $day = ((63488 & $timeint[1]) >>11);
+    $temp1 = ((1792 & $timeint[1]) >> 6);
+    $temp2 = ((192 & $timeint[1]) >> 6);
+    $hour = $temp1 | $temp2;
+    $minute = (63 & $timeint[1]);
+    $rdate = strtotime("$year/$month/$day $hour:$minute");
+    $sitedata['producttime'] = gmdate('Y-m-d H:i',$rdate);
+
+    #Kludge fix to correct when the time gets off
+        if(abs($rdate-(strtotime($email_date)))> (3600*1)){
+        $sitedata['producttime'] = $email_date;
+        echo "Update product time\n";
+    }
+
+
+
+    ####Unpack the number of retries for the last transmission
+        $array =  unpack('C',substr($data,3,1));
+    $sitedata['tries'] = $array[1];
+
+    ####Unpack Logger batt
+    $array = unpack('s',substr($data,4,2));
+    $sitedata['battery'] = $array[1]/100;
+
+    ####Unpack Air Temp
+    $array = unpack('s',substr($data,6,2));
+    $sitedata['airtemp'] = $array[1]/10;
+
+    ####Unpack Raw Depth
+    $array = unpack('s',substr($data,8,2));
+    $sitedata['distance'] = abs($array[1]/10);
+    if($sitedata['distance'] > 384){
+        $sitedata['distance'] = -9999;
+        $sitedata['calcstage'] = -9999;
+    }
+    elseif($sitedata['distance'] < 24){
+        echo "Bad value\n";
+        $sitedata['distance'] = -9999;
+        $sitedata['calcstage'] = -9999;
+    }
+    else{
+    ###Calculate stage
+        if($zerostage){
+            $tempStage = $zerostage - ($sitedata['distance'])/12;
+            $sitedata['calcstage']= sprintf("%0.2f",$tempStage - $tempStage($sitedata['airtemp']*$slope-$offset));
+        }
+    }
+    
+    
     return $sitedata;
 }
 
