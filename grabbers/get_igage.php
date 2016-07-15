@@ -206,7 +206,8 @@ function decode_igage10adjust($email_date,$data,$verbose,$zerostage){
     ###Calculate stage
         if($zerostage){
             $tempStage = $zerostage - ($sitedata['distance'])/12;
-            $sitedata['calcstage']= sprintf("%0.2f",$tempStage - $tempStage($sitedata['airtemp']*$slope-$offset));
+            $stage = $tempStage - $tempStage*($sitedata['airtemp']*$slope-$offset);
+            $sitedata['calcstage']= sprintf("%0.2f",$stage);
         }
     }
     
