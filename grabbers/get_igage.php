@@ -141,8 +141,8 @@ function decode_igage10($email_date,$data,$verbose,$zerostage){
 
 function decode_igage10adjust($email_date,$data,$verbose,$zerostage){
 
-    $slope = 0.0009;
-    $offset = 0.017;
+    $slope = 0.0007;
+    $offset = 0.021;
     $sitedata = array();
     $datalength = strlen($data);
     if($verbose) echo "Length: $datalength<br>";
@@ -205,8 +205,8 @@ function decode_igage10adjust($email_date,$data,$verbose,$zerostage){
     else{
     ###Calculate stage
         if($zerostage){
-            $tempStage = $zerostage - ($sitedata['distance'])/12;
-            $stage = $tempStage - $tempStage*($sitedata['airtemp']*$slope-$offset);
+            $adjusted_distance = $sitedata['distance']-$sitedata['distance']*($sitedata['airtemp']*$slope-$offset);
+            $stage = $zerostage - ($adjusted_distance)/12;
             $sitedata['calcstage']= sprintf("%0.2f",$stage);
         }
     }
@@ -392,7 +392,7 @@ function array_to_shef($site,$dataarray,$overWrite = false,$PE){
  *  MAIN PROGRAM LOGIC
  */
 
-$logger->log("END",PEAR_LOG_INFO);
+$logger->log("START",PEAR_LOG_INFO);
 $sendshef = 0;
 $shefFile =  "SRAK58 PACR ".date('dHi')."\n";
 $shefFile .= "ACRRR3ACR \n";
@@ -523,6 +523,7 @@ file_put_contents(TO_LDAD.$fileName, $shefFile);
 
 if($sendshef == 0){
     $logger->log("No sites to ingest to AWIPS, Process Complete!",PEAR_LOG_INFO);
+    $logger->log("END",PEAR_LOG_INFO);
     exit();
 }
 
