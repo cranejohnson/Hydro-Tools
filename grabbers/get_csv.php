@@ -170,7 +170,7 @@ $result = $mysqli->query($query) or die($mysqli->error);
 
 # Procces each site in the configuration table
 while ($row = $result->fetch_assoc()){
-    
+    try{    
     $latestRecord = 0;
 
     //Rows beginning with the comment characters are skipped
@@ -395,6 +395,10 @@ while ($row = $result->fetch_assoc()){
     if($numSkip) $logger->log("$numSkip lines of data from {$row['lid']} skipped because the data is in the future",PEAR_LOG_WARNING);
 
     $logger->log("$siteLines lines processed for  {$row['lid']}",PEAR_LOG_INFO);
+    } catch(Exception $e){
+	$logger->log("Exception for {$row['lid']}:".$e,PEAR_LOG_ERR);
+    }
+
 }
 
 
