@@ -6,3 +6,4 @@ tmp/*
 TO_LDAD/*
 push2Ldad.php
 getUSGSQ.state
+metaCheck/output/*
