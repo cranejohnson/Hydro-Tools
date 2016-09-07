@@ -9,14 +9,8 @@
  * @version 0.1
  */
 
-// Report all errors except E_NOTICE
-// This is the default value set in php.ini
-error_reporting(0);
-
-
 
 /* Configuration information */
-//require_once('/usr/local/apps/scripts/bcj/hydroTools/config.inc.php');
 require_once('../config.inc.php');
 define('DEFAULT_CACHE_AGE',86400);       /* Define the cache age for downloaded files */
 define('MAX_LOCATION_ERROR',0.1);       /* Distance used to define location error between AHPS and USGS */
