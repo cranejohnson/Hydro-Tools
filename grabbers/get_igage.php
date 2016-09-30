@@ -331,9 +331,64 @@ function decode_csi($email_date,$data,$verbose,$zerostage){
     if($zerostage)$sitedata['calcstage']= sprintf("%0.2f",$zerostage - abs($sitedata['distance'])/12);
 
     return $sitedata;
+}
+    
+function decode_cordova($email_date,$data,$verbose,$zerostage){
 
-                                                                                                                                                    }
+    # parse 14 byte structure - big endian order
+    # bytes     description
+    # 1,2       Hours since the start of the current calendar (UTC)
+    #           year = value
+    # 3,4       Battery Voltage = value/10 - 200
+    # 5,6       Precip_storage = value/10 - 200
+    # 7,8       Precip_TB = value/10 - 200
+    # 9,10      Air_Temp = value/100 - 200
+    # 11,12     RH = value/100 - 200
+    # 13,14     Previous Communication Attempts = value/10 - 200
+    
+    $sitedata = array();
+    $datalength = strlen($data);
+    $email_year = gmdate('Y',(strtotime($email_date)));
+    $base_time = strtotime("01Jan$email_year 00:00")-24*3600;
 
+
+    if($verbose) echo "Length: $datalength<br>";
+
+    $decimal = unpack('n',substr($data,0,2));
+    $rec_time = $base_time+$decimal[1]*3600;
+    $sitedata['producttime'] = date('Y-m-d H:i',$rec_time);
+
+
+        ###Unpack Battery Voltage
+    $array = unpack('n',substr($data,2,2));
+    $sitedata['shefValues']['VBIRZZ'] = ($array[1]/10)-200;
+
+        ###Unpack Precip Storage
+    $array = unpack('n',substr($data,4,2));
+    $sitedata['shefValues']['PCIR2Z'] = (($array[1]/10)-200)/10;
+
+        ###Unpack Precip TB
+    $array = unpack('n',substr($data,6,2));
+    $sitedata['shefValues']['PCIRZZ'] = (($array[1]/10)-200)/100;
+
+    ###Unpack Air Temp
+    $array = unpack('n',substr($data,8,2));
+    $sitedata['shefValues']['TAIRZZ'] = ($array[1]/10)-200;
+
+    ###Unpack RH
+    $array = unpack('n',substr($data,10,2));
+    $sitedata['shefValues']['XRIRZZ'] = ($array[1]/10)-200;
+    
+     ###Unpack Comm Attempts Voltage
+    $array = unpack('n',substr($data,12,2));
+    $sitedata['tries'] = ($array[1]/10)-200;
+
+    
+    
+    return $sitedata;   
+}
+    
+    
 function dbinsert($sitedata,$mysqli,$logger){
 
     $names = '';
@@ -356,11 +411,30 @@ function dbinsert($sitedata,$mysqli,$logger){
     return $result;
 }
 
-function HG_VB_to_shef($sitedata,$overWrite = true){
-        #Kludge to convert snowdepth info to inches
-        if($sitedata['pe'] == 'SD') $sitedata['calcstage'] = $sitedata['calcstage']*12;
+
+function csi_to_shef($sitedata,$overWrite = false){
 
     $shefStr = "";
+    $over = "";
+    if($overWrite) $over = 'R';
+
+    $dc = date('\D\CymdHi',strtotime($sitedata['postingtime']));
+    $shefStr .= ".A$over ".$sitedata['lid']." ". date('ymd \Z \D\HHi',strtotime($sitedata['producttime']))."/$dc/";
+    foreach($sitedata['shefValues'] as $shef => $value){
+        $shefStr .= $shef." ".$value."/";
+    }
+    $shefStr .= "\n";
+    
+    return $shefStr;
+}    
+    
+    
+function HG_VB_to_shef($sitedata,$overWrite = true){
+     #Kludge to convert snowdepth info to inches
+    if($sitedata['pe'] == 'SD') $sitedata['calcstage'] = $sitedata['calcstage']*12;
+
+    $shefStr = "";
+    $over = "";
     if($overWrite) $over = 'R';
     $dc = date('\D\CymdHi',strtotime($sitedata['postingtime']));
     $shefStr .= ".A$over ".$sitedata['lid']." ". date('ymd \Z \D\HHi',strtotime($sitedata['producttime']))."/$dc/";
@@ -371,20 +445,6 @@ function HG_VB_to_shef($sitedata,$overWrite = true){
     return $shefStr;
 }
 
-function array_to_shef($site,$dataarray,$overWrite = false,$PE){
-    $shefStr = "";
-    $over = "";
-    if($overWrite) $over = 'R';
-    foreach($dataarray as $key => $values){
-        $dc = date('\D\CymdHi');
-        $shefStr .= ".A$over $site ". date('ymd \Z \D\HHi',$key)."/$dc/";
-        foreach($values as $shefcode => $val){
-            $shefStr .= $shefcode."I".$PE."Z ".trim($val)."/";
-        }
-        $shefStr .= "\n";
-    }
-    return $shefStr;
-}
 
 
 /**
@@ -495,7 +555,12 @@ if($emails){
                 $sitedata = array_merge($sitedata,$sbddata);
                 dbinsert($sitedata,$mysqli,$logger);
                 if($row['ingest']){
-                    $shefFile .= HG_VB_to_shef($sitedata);
+                    if(isset($sitedata['shefValues'])){
+                        $shefFile .=  csi_to_shef($sitedata);
+                    }
+                    else{    
+                        $shefFile .= HG_VB_to_shef($sitedata);
+                    }
                     $sendshef++;
                 }
 
