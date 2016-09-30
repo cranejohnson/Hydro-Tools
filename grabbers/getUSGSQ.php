@@ -40,6 +40,7 @@ $typeSource= array(
       'MXYA2' => 'R2'
 );
 
+$shefReplace = '';
 
 /* Web Function Library */
 require_once(RESOURCES_DIRECTORY."web_functions.php");
@@ -145,6 +146,7 @@ else{
 
 if(isset($opts["f"])){
     $force = true;
+    $shefReplace = 'R';
 }
 else{
     $force = false;
@@ -224,29 +226,43 @@ function calculate_median($arr) {
 }
 
 //Subroutine to find missing data in the USGS data object
-function findMissingUSGS($USGS){
-    $dataInt = array();
-    $missingDates = array();
-    ksort($USGS['data']);
-    reset($USGS['data']);
-    $lastDate = key($USGS['data']);
-    foreach($USGS['data'] as $recordTime=>$dataVal){
-        $dataInt[] = $recordTime - $lastDate;
-        $lastDate= $recordTime;
-    }
+function findMissingUSGS($USGS,$logger){
+    $params = array('HG','QR');
+    
+    foreach($USGS as $key => $value){
+        $dataInt = array();
+        $missingDates = array();
+        if(!isset($value['data'])) continue;
+        ksort($value['data']);
+        reset($value['data']);
+        $lastDate = key($value['data']);
+        foreach($value['data'] as $recordTime=>$dataVal){
+            $dataInt[] = $recordTime - $lastDate;
+            $lastDate= $recordTime;
+        }
 
-    $interval = calculate_median($dataInt);
-    ksort($USGS['data']);
-    reset($USGS['data']);
-    $lastDate = key($USGS['data']);
-    foreach($USGS['data'] as $recordTime=>$dataVal){
-        while(($recordTime - $lastDate) > $interval){
-            $missingDates[] = $lastDate + $interval;
+        $interval = calculate_median($dataInt);
+        $logger->log("Estimated data interval for site ".$key.": ".$interval." seconds",PEAR_LOG_DEBUG);
+        if($interval < (15*60)) $interval = 15*60;  
+        ksort($value['data']);
+        reset($value['data']);
+        $lastDate = key($value['data']);
+        foreach($value['data'] as $recordTime=>$dataVal){
+            while(($recordTime - $lastDate) > $interval){
+                $missingDates[] = $lastDate + $interval;
+                $lastDate = $lastDate + $interval;
+            }
             $lastDate = $lastDate + $interval;
         }
-        $lastDate = $lastDate + $interval;
-    }
-    return $missingDates;
+        $logger->log("Number of missing values for site ".$key.": ".count($missingDates),PEAR_LOG_DEBUG);
+        foreach($params as $param){
+            foreach($missingDates as $date){
+                $USGS[$key]['data'][$date][$param]['val'] = -9999;
+                $logger->log("Added missing value for ".$key." at ".$date,PEAR_LOG_DEBUG);
+            }
+        }    
+    }    
+    return $USGS;
 }
 
 
@@ -254,6 +270,8 @@ function findMissingUSGS($USGS){
 
 $numSites = 0;
 $linesInShef = 0;
+
+$usgs = findMissingUSGS($usgs,$logger);
 
 //Loop through and process each site
 foreach($usgs as $key => $value){
