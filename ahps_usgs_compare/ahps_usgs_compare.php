@@ -9,6 +9,8 @@
  */
 
 
+$ignoreSites = array("SCJA2");
+
 chdir(dirname(__FILE__));
 
 
@@ -212,6 +214,10 @@ foreach($siteInfo['sites'] as $nws => $site){
         if($nws != $siteCheck) continue;
     }
 
+    //Ignore certain sites....typically recently decommisioned usgs sites
+    if(in_array($nws,$ignoreSites)) continue;	
+
+
     $logger->log("Working on: ".$nws." - ".$site['usgs'],PEAR_LOG_DEBUG);
 
     //Check if this is an ahps site
@@ -397,7 +403,7 @@ foreach($siteInfo['sites'] as $nws => $site){
     if(!$USGS_QR && $AHPS_QR){
         if(!isset($usgs[$index])){
             $logger->log("NWS publishing discharge and USGS $index is not valid ".$nws,PEAR_LOG_ERR);
-            $jsonError['sites'][$nws][] = "NWS publishing dischare and USGS $index is not valid $nws";
+            $jsonError['sites'][$nws][] = "NWS publishing discharge and USGS $index is not valid $nws";
         }elseif($usgs[$index]['inService']){
             $logger->log("NWS publishing dicharge and USGS site is not: ".$nws,PEAR_LOG_ERR);
             $jsonError['sites'][$nws][] = "NWS publishing discharge and USGS is not";
