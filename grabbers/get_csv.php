@@ -23,9 +23,7 @@ require_once('../config.inc.php');
 require_once(RESOURCES_DIRECTORY."web_functions.php");
 $mysqli->select_db("aprfc");
 
-$debug = false;
-
-$skipCols = array('recordTime','year','jday','hour','date','time','#');
+$skipCols = array('recordTime','year','jday','hour','date','time','#','hhmm');
 
 //Pear log package
 require_once (PROJECT_ROOT.'/resources/Pear/Log.php');
@@ -113,10 +111,10 @@ function convert($val,$conv){
 
 
 #Get the date from a jday and year
-function getDateFromDayHour($year,$dayOfYear,$hour) {
+function getDateFromDayHour($year,$dayOfYear,$hour,$minute=0) {
 
   $date = strtotime("$year-01-01");
-  $date = $dayOfYear*86400+$hour*3600+$date;
+  $date = $dayOfYear*86400+$hour*3600+$minute*60+$date;
   return $date;
 }
 
@@ -167,9 +165,35 @@ $query = "select delimiter,id,lid,timezone,headerLines,commentLines,typeSource,u
 $result = $mysqli->query($query) or die($mysqli->error);
 
 
+//Handle the command line arguments
+$opts = getoptreq('s:d', array());
+
+if(!isset($opts["s"])){
+    $site = false;
+    $logger->log("Checking all csv sites",PEAR_LOG_INFO);
+}
+else{
+    $site = $opts["s"];
+    $logger->log("Only checking site: ".$site,PEAR_LOG_INFO);
+}
+
+if(isset($opts["d"])){
+    $debug = true;
+}
+else{
+    $debug = false;
+}
+
+
 
 # Procces each site in the configuration table
 while ($row = $result->fetch_assoc()){
+    //Limit checking to just one site if selected with command line argument
+    if($site){
+        if($site != $row['lid']) continue;
+    }   
+
+    //Check data for the next site from the DB table
     try{    
     $latestRecord = 0;
 
@@ -185,8 +209,8 @@ while ($row = $result->fetch_assoc()){
 
     #Skip grabbing data if the time isn't right
     if(time()<(strtotime($row['lastRecordDatetime'])+$interval)){
-	$logger->log("Skipping {$row['lid']} interval not reached",PEAR_LOG_INFO);
-	continue;
+        $logger->log("Skipping {$row['lid']} interval not reached",PEAR_LOG_INFO);
+    continue;
     }
 
     #Download the CSV file
@@ -229,6 +253,7 @@ while ($row = $result->fetch_assoc()){
         print_r($decodes);
     }
 
+    //Check to see if this is a multi site download location
     $idLookup = array();
     if(preg_match('/idLookup\((.*?)\)/',$row['decodes'],$match)){
         $pairs = explode(':',$match[1]);
@@ -261,20 +286,24 @@ while ($row = $result->fetch_assoc()){
         if($debug) echo $line."\n";
 
 
-
-        //Make sure it is not a comment line, if so skip it
-        if(in_array($firstChar,$comments)|(strlen($line)<5)) {
-            if($debug) echo "Comment Line\n";
-            continue;
-        }
-
+        
         //Strip double qoutes from each line
         $line = str_replace('"', "",$line);
         $line = str_replace("'", "",$line);
 
         $data = explode($dataDelimiter,trim($line));
-
-
+ 
+        //Make sure it is not a comment line, if so skip it
+        //Check the First Character first
+        if(in_array($firstChar,$comments)|(strlen($line)<5)) {
+            if($debug) echo "Comment Line\n";
+            continue;
+        } 
+        //Check the first data value and see if it is a comment string
+        if(in_array($data[0],$comments)) {
+            if($debug) echo "Comment Line - indicated by data value\n";
+            continue;
+        }
 
 
         $dateField = array_search('recordTime',$decodes);
@@ -285,7 +314,17 @@ while ($row = $result->fetch_assoc()){
             $yearField = array_search('year',$decodes);
             $jdayField = array_search('jday',$decodes);
             $hourField = array_search('hour',$decodes);
-            $recordTime = getDateFromDayHour($data[$yearField],($data[$jdayField]-1),$data[$hourField])+$timeCorrection;
+            $hhmmField = array_search('hhmm',$decodes);
+            $hours = $data[$hourField];
+            $min = 0;
+            $year = $data[$yearField];
+            $jday = $data[$jdayField]-1;
+            if($hhmmField){
+                
+                $hours = substr($data[$hhmmField],0,-2);
+                $min = substr($data[$hhmmField],-2);
+            }
+            $recordTime = getDateFromDayHour($year,$jday,$hours,$min)+$timeCorrection;
             #$logger->log("No recordTime field defined for site {$row['lid']}",PEAR_LOG_ERR);
             #continue;
         }
