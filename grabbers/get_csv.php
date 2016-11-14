@@ -375,7 +375,7 @@ while ($row = $result->fetch_assoc()){
                     if ($debug) echo "id lookup: ".$idLookup[$data[$i]]."\n";
                     $shefData['lid'] = $idLookup[$data[$i]];
                 }else{
-                    $logger->log("Problem with site lookup for {$row['lid']} sitename: {$data[$i]}",PEAR_LOG_WARNING);
+                    $logger->log("Problem with site lookup for {$row['url']} site in file not configured: {$data[$i]}",PEAR_LOG_WARNING);
                     break;
                 }
                 continue;   #Go to next data value
