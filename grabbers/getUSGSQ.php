@@ -144,6 +144,14 @@ else{
     }
 }
 
+#If -r set then add the 'R' to the shef string to replace existing data in DB
+if(isset($opts["r"])){
+    $shefReplace = 'R';
+}
+else{
+    $shefReplace = '';
+}
+
 if(isset($opts["f"])){
     $force = true;
     $shefReplace = 'R';
@@ -152,13 +160,7 @@ else{
     $force = false;
 }
 
-#If -r set then add the 'R' to the shef string to replace existing data in DB
-if(isset($opts["r"])){
-    $shefReplace = 'R';
-}
-else{
-    $shefReplace = '';
-}
+
 
 if(!isset($opts["t"])){
     $logger->log("No type source defined, set to default 'RZ'",PEAR_LOG_INFO);
