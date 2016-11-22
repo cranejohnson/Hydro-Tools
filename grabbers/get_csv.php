@@ -141,7 +141,7 @@ function returnShefString($data,$over = true){
         else{   
             $dataElement = $pe."I".$data['typeSource']."Z";
         }    
-        $string .= ".A$R ".$data['lid']." ".$data['recordTime']."/".$data['dcTime'];
+        $string .= ".A".$R." ".$data['lid']." ".$data['recordTime']."/".$data['dcTime'];
         $string .= "/".$dataElement." ".$value;
         $string .= "\n";
 
@@ -204,7 +204,24 @@ while ($row = $result->fetch_assoc()){
     $dataDelimiter = $row['delimiter'];
     
     #Get the time correction and ingest interval
-    $timeCorrection = -($row['timezone']*3600);
+    switch ($row['timezone']) {
+    case 'UTC':
+        $timeCorrection = 0;
+        break;
+    case 'AKST':
+        //site is always 9 hours offset from UTC
+        $timeCorrection = 9*3600;
+        break;
+    case 'AKDT':
+        //site follows daylights savings time for Anchorage
+        date_default_timezone_set('America/Anchorage');
+        $timeCorrection =  -date('Z');
+        date_default_timezone_set('UTC');
+        break;
+    default:
+        $timeCorrection = -($row['timezone']*3600);
+    
+}
     $interval = strtotime("2014-1-1 ".$row['ingestInterval']) -strtotime("2014-1-1 00:00:00");
 
     #Skip grabbing data if the time isn't right
