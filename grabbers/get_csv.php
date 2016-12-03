@@ -101,7 +101,10 @@ function convert($val,$conv){
         }
         if ($conv == 'mps:mph'){
             $val = ($val*2.237);
-	}
+        }
+        if ($conv == 'kpa:inhg'){
+            $val = ($val*0.2952);
+        }
 
     return $val;
 }
