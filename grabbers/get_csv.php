@@ -81,6 +81,18 @@ function convert($val,$conv){
        if($parts[0] == '0gage'){
            $val = $parts[1]-$val;
        }
+       if($parts[0] == 'depth'){
+           $depth = $parts[1];
+           #convert value C-F and then to tenths of degrees
+           $dataVal = (($val*1.8)+32);
+           if($dataVal<0){
+                $depth = $depth*-1;
+                $dataVal = $dataVal*-1;
+            }    
+           $tail = abs($dataVal/1000);
+           $val = $depth+$tail;
+        }   
+           
        if ($conv == 'm:ft'){
             $val = $val*3.28083;
         }
@@ -105,6 +117,7 @@ function convert($val,$conv){
         if ($conv == 'kpa:inhg'){
             $val = ($val*0.2952);
         }
+        
 
     return $val;
 }
@@ -409,9 +422,14 @@ while ($row = $result->fetch_assoc()){
 
             #If there is no value move on the the next value in the data string
             if(!isset($data[$i])){
-                continue;   #Go to next data value
+                continue;   #Go to the next data value
             }
-
+            
+            #If there is no data move on to the next value in the data string
+            if($data[$i] == ''){
+                continue;   #go to the next data value
+            }
+            
             $value = trim($data[$i]);
             #if($debug) echo $value;
             #If the value is null replace it with missing
@@ -427,8 +445,13 @@ while ($row = $result->fetch_assoc()){
             #Get the unit conversion and convert data if required
             preg_match('/\[(.+)\]/',$code,$match);
             if(isset($match[1])) $value = convert($value,$match[1]);
-
-            $shefData['data'][$pe] = round($value,2);
+            
+            if(substr($pe,0,2) == "TV"){
+                $shefData['data'][$pe] = round($value,4);
+            }
+            else{
+                $shefData['data'][$pe] = round($value,2);
+            }        
             $hasData++;
 
         }
