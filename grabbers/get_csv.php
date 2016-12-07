@@ -316,7 +316,7 @@ while ($row = $result->fetch_assoc()){
         $shefStr = '';
 
         $firstChar = substr($line,0,1);
-        if($debug) echo $line."\n";
+        if($debug) echo "\n\nFile Data:\n".$line."\n\n";
 
 
         
@@ -378,7 +378,7 @@ while ($row = $result->fetch_assoc()){
         $shefData['dcTime'] = date('\D\CymdHi');
 
 
-        if($debug) echo $shefData['recordTime']."\n";
+        if($debug) echo "Decoded Record Time:".$shefData['recordTime']."\n";
 
         #Check and see if this row is new data....if not continue to the next row of data
         if(($recordTime <= strtotime($row['lastRecordDatetime'])) && ($shefData['lid'] != 'MULTI')){
@@ -469,7 +469,7 @@ while ($row = $result->fetch_assoc()){
             $numLines++;
             $siteLines++;
             if(isset($shefData['data'])) $shefFile .= returnShefString($shefData,false);
-            if($debug) echo "\nShef String: ".returnShefString($shefData,true);
+            if($debug) echo "\nShef String:\n".returnShefString($shefData,true);
         }
 
     }
