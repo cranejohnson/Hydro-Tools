@@ -194,23 +194,11 @@ $qcArray = array();
 
 /* if HSA or TYPE is not specified kick out an error */
 if((strlen($filter['value']) == 0) || (strlen($filter['column']) == 0)){
-    $logger->log("Column and filter not defined.",PEAR_LOG_INFO);
+    $logger->log("Column ({$filter['column']}) and filter ({$filter['value']}) not defined.",PEAR_LOG_INFO);
     $logger->log("STOP",PEAR_LOG_INFO);
     echo "\nExample Usage: /usgs_meta_check.php?f=wfo&v=pafc\n\n";
     exit;
 }
-
-if(strtoupper($value) == 'ALL'){
-    $filter = null;
-}
-
-/**
- * Array of hads metadata for each site
- *
- * @var array $hadsData
- */
-$hadsData = array();
-
 
 /**
  * Create cache id
@@ -226,6 +214,21 @@ $id = OUTPUT_FOLDER.$filter['column']."_".$filter['value']."_meta_check.html";
  * @var obj $logger
  */
 $logger->log("Working on: {$filter['column']} = {$filter['value']} ",PEAR_LOG_INFO);
+
+
+
+if(strtoupper($value) == 'ALL'){
+    $filter = null;
+    $id = "All_meta_check.html";
+}
+
+/**
+ * Array of hads metadata for each site
+ *
+ * @var array $hadsData
+ */
+$hadsData = array();
+
 
 
 /**
