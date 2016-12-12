@@ -109,6 +109,27 @@ function calcDistance($lat1, $lon1, $lat2, $lon2, $unit) {
 }
 
 
+function get_all_USGS_info(){
+    $states = array('AK'=>'Alaska', 'HI'=>'Hawaii', 'CA'=>'California', 'NV'=>'Nevada', 'OR'=>'Oregon', 'WA'=>'Washington', 'AZ'=>'Arizona', 'CO'=>'Colorada', 'ID'=>'Idaho', 'MT'=>'Montana', 'NE'=>'Nebraska', 'NM'=>'New Mexico', 'ND'=>'North Dakota', 'UT'=>'Utah', 'WY'=>'Wyoming', 'AL'=>'Alabama', 'AR'=>'Arkansas', 'IL'=>'Illinois', 'IA'=>'Iowa', 'KS'=>'Kansas', 'KY'=>'Kentucky', 'LA'=>'Louisiana', 'MN'=>'Minnesota', 'MS'=>'Mississippi', 'MO'=>'Missouri', 'OK'=>'Oklahoma', 'SD'=>'South Dakota', 'TX'=>'Texas', 'TN'=>'Tennessee', 'WI'=>'Wisconsin', 'CT'=>'Connecticut', 'DE'=>'Delaware', 'FL'=>'Florida', 'GA'=>'Georgia', 'IN'=>'Indiana', 'ME'=>'Maine', 'MD'=>'Maryland', 'MA'=>'Massachusetts', 'MI'=>'Michigan', 'NH'=>'New Hampshire', 'NJ'=>'New Jersey', 'NY'=>'New York', 'NC'=>'North Carolina', 'OH'=>'Ohio', 'PA'=>'Pennsylvania', 'RI'=>'Rhode Island', 'SC'=>'South Carolina', 'VT'=>'Vermont', 'VA'=>'Virginia', 'WV'=>'West Virginia');
+    $file = 'USGS_all_siteinfo.json';
+
+    foreach($states as $state => $long_name){
+        $url = "http://waterservices.usgs.gov/nwis/site/?format=rdb,1.0&siteStatus=active&stateCd=".$state;
+        $json = json_decode(file_get_contents($file),true);
+        $usgs = getUSGS_siteInfo($url);
+        foreach($usgs as $usgsID => $info){
+            $json[$usgsID] = $info;
+        }
+        file_put_contents($file, json_encode($json,128));
+    }
+    return($json);
+}
+
+function convert($size)
+{
+    $unit=array('b','kb','mb','gb','tb','pb');
+    return @round($size/pow(1024,($i=floor(log($size,1024)))),2).' '.$unit[$i];
+}
 
 /**
  *  MAIN PROGRAM
@@ -119,8 +140,24 @@ function calcDistance($lat1, $lon1, $lat2, $lon2, $unit) {
  */
 
 
-$opts = getoptreq('f:v:c:', array());
+$usgsInfo = array();
+$opts = getoptreq('f:v:c:u', array());
 
+$file = "USGS_all_siteinfo.json";
+
+$usgsInfo = json_decode(file_get_contents($file),true);
+
+/* u - update usgs site information with all active sites in the 50 states */
+if(isset($opts["u"]) | !$usgsInfo){
+    $logger->log("Loading USGS site information.",PEAR_LOG_INFO);
+    $logger->log("Current Memory Usage: ".convert(memory_get_usage()),PEAR_LOG_INFO);
+    $usgsInfo = get_all_USGS_info();
+    $logger->log("Completed Updated USGS site info file: USGS_all_siteinfo.json",PEAR_LOG_INFO);
+    $logger->log("Current Memory Usage: ".convert(memory_get_usage()),PEAR_LOG_INFO);
+}
+
+
+/*  f - Filter column 'rfc' or 'wfo' */
 if(isset($opts["f"])){
     $column = strtoupper($opts["f"]);
 }
@@ -128,6 +165,7 @@ else{
     $column = null;
 }
 
+/* v - Filter value i.e. 'pafc' or 'aprfc' */
 if(isset($opts["v"])){
     $value = strtoupper($opts["v"]);
 }
@@ -228,7 +266,8 @@ else{
     $hadsData = getHADS_NWSLID_Lookup('ALL',$cache_age);
 
     /* Set up the table */
-    $table = "<table id=\"myTable\" class=\"tablesorter\"><thead><tr><th>NWSLID</th><th>RFC</th><th>WFO</th><th>AHPS USGS ID</th><th>HADS USGS ID</th><th>AHPS Datum</th><th>USGS Datum</th><th>AHPS Lat</th><th>USGS Lat</th><th>AHPS Lon</th><th>USGS Lon</th><th>Distance</th></tr></thead><tbody>";
+    $table = "Table Created at: ".date("F j, Y, g:i a")." UTC<br>";
+    $table .= "<table id=\"myTable\" class=\"tablesorter\"><thead><tr><th>NWSLID</th><th>RFC</th><th>WFO</th><th>AHPS USGS ID</th><th>HADS USGS ID</th><th>AHPS Datum</th><th>USGS Datum</th><th>AHPS Lat</th><th>USGS Lat</th><th>AHPS Lon</th><th>USGS Lon</th><th>Distance</th></tr></thead><tbody>";
 
     /* Process each site */
     foreach($ahpsReport['sites'] as $site){
@@ -253,7 +292,7 @@ else{
 
 
         /* Check to make sure the USGS id specified in the NRLBD matches the USGS ID specified by HADS.
-           If this is not a Hads site move continue on to the next site */
+           If this is not a Hads site continue on to the next site */
         $idClass = '';
         $array['AHPS_USGS_ID'] = $site['usgsid'];
         $nwsUSGS = $site['usgsid'];
@@ -278,17 +317,25 @@ else{
 
         /* Get USGS NWIS site informaiton */
         if(strlen($nwsUSGS) > 7){
-            $url = "http://waterservices.usgs.gov/nwis/site/?format=rdb,1.0&sites=".$nwsUSGS."&siteOutput=expanded";
-            $usgs = getUSGS_siteInfo($url);
-            $array['USGS_lat'] = floatval($usgs[$nwsUSGS]['dec_lat_va']);
-            $array['USGS_lon'] = floatval($usgs[$nwsUSGS]['dec_long_va']);
-            $array['USGS_datum'] = floatval($usgs[$nwsUSGS]['alt_va']);
+            if(isset($usgsInfo[$nwsUSGS])){
+                $array['USGS_lat'] = floatval($usgsInfo[$nwsUSGS]['dec_lat_va']);
+                $array['USGS_lon'] = floatval($usgsInfo[$nwsUSGS]['dec_long_va']);
+                $array['USGS_datum'] = floatval($usgsInfo[$nwsUSGS]['alt_va']);
 
+            }
+            else{
+                $url = "http://waterservices.usgs.gov/nwis/site/?format=rdb,1.0&sites=".$nwsUSGS."&siteOutput=expanded";
+                $usgs = getUSGS_siteInfo($url);
+                $array['USGS_lat'] = floatval($usgs[$nwsUSGS]['dec_lat_va']);
+                $array['USGS_lon'] = floatval($usgs[$nwsUSGS]['dec_long_va']);
+                $array['USGS_datum'] = floatval($usgs[$nwsUSGS]['alt_va']);
+            }
 
         }
         else{
-            $logger->log("USGS id specified by new for $nwslid is less than 8 characters NWS USGS id: $nwsUSGS",PEAR_LOG_ERR);
+            $logger->log("USGS id specified by for $nwslid is less than 8 characters NWS USGS id: $nwsUSGS",PEAR_LOG_INFO);
         }
+
 
         /* Try to get AHPS data....sometimes this takes more than one try */
          for( $i=0; $i<3; $i++ ) {
@@ -313,14 +360,15 @@ else{
 
 
         $datumClass = '';
+
         /* Compare USGS and NWS datums and flag if they are different */
-        if(!isset($usgs[$nwsUSGS]['alt_va'])) $usgs[$nwsUSGS]['alt_va'] = '';
-        if(strlen($ahps['gageDatum'])>0 && strlen($usgs[$nwsUSGS]['alt_va'])>0){
-            if(abs(floatval($ahps['gageDatum'])-floatval($usgs[$nwsUSGS]['alt_va']))> MAX_DATUM_ERROR){
+        if($array['NWS_datum']>0 && $array['USGS_datum']>0){
+            if(abs($array['NWS_datum']-$array['USGS_datum']) > MAX_DATUM_ERROR){
               $datumClass = 'error';
               $logger->log("USGS-AHPS datums are different for:".$site['nwsshefid'],PEAR_LOG_ERR);
             }
         }
+
 
         /* Compare USGS and NWS locations and flag if they are different */
         $distance = '';
@@ -360,13 +408,13 @@ else{
         /* Create the Google static map link */
         $mapLink = "https://maps.googleapis.com/maps/api/staticmap?center=".$site['latitude'].",".-$site['longitude']."&zoom=11&size=600x300&maptype=roadmap
             &markers=color:blue%7Clabel:N%7C".$site['latitude'].",".-$site['longitude']."&markers=color:green%7Clabel:G%7C40.711614,-74.012318
-            &markers=color:red%7Clabel:U%7C".$usgs[$nwsUSGS]['dec_lat_va'].",".$usgs[$nwsUSGS]['dec_long_va']."
+            &markers=color:red%7Clabel:U%7C".$array['USGS_lat'].",".$array['USGS_lon'] ."
             &key=AIzaSyDAvZIKZZq0RfJf59QAh5ZeynMrTEF-G48";
 
 
 
 
-        $table .= "<tr ><td>$nwslid</td><td>".$site['rfc']."</td><td>".$site['wfo']."</td><td class ='".$idClass."'>".$site['usgsid']."</td><td class ='".$idClass."'>".$hadsData['sites'][$nwslid]['usgs']."</td><td class='".$datumClass."'>".$ahps['gageDatum']."</td><td class='".$datumClass."'>".$usgs[$nwsUSGS]['alt_va']."</td><td>".$site['latitude']."</td><td>".$usgs[$nwsUSGS]['dec_lat_va']."</td><td>".$site['longitude']."</td><td>".$usgs[$nwsUSGS]['dec_long_va']."</td><td class='dist'><a href='$mapLink'  target='_blank'>$distance</a></td></tr>";
+        $table .= "<tr ><td>$nwslid</td><td>".$site['rfc']."</td><td>".$site['wfo']."</td><td class ='".$idClass."'>".$site['usgsid']."</td><td class ='".$idClass."'>".$hadsData['sites'][$nwslid]['usgs']."</td><td class='".$datumClass."'>".$ahps['gageDatum']."</td><td class='".$datumClass."'>".$array['USGS_datum'] ."</td><td>".$site['latitude']."</td><td>".$array['USGS_lat']."</td><td>".$site['longitude']."</td><td>".$array['USGS_lon']."</td><td class='dist'><a href='$mapLink'  target='_blank'>$distance</a></td></tr>";
 
         $qcArray['sites'][$nwslid] = $array;
 
@@ -430,6 +478,12 @@ $html = "<!DOCTYPE html>
                     if(!showRow){
                          this.style.display = 'none';
                     }
+                });
+            }
+
+           function showAll(){
+                $('#myTable tbody tr').each(function() {
+                         this.style.display = 'table-row';
                 });
             }
 
@@ -660,12 +714,14 @@ $html = "<!DOCTYPE html>
             }
 
         </style>
+
     NWS Source: http://water-md.weather.gov/monitor/ahps_cms_report.php<br>
     USGS Source: http://waterservices.usgs.gov/rest/Site-Service.html<br>
     HADS Source: http://www.nws.noaa.gov/oh/hads/USGS/ALL_USGS-HADS_SITES.txt<br><br>
     Highlight Distance: <input type='text' id='distance' value='0.1' size = '5' onChange='checkDistance();'>miles (<span id='distNum'></span>)<br>
     WFO/RFC Filter:  <input type='text' id='filterVal' value='' size = '5' onChange='filter($(\"#filterVal\").val());'><br>
     <input id = 'btnSubmit' type='submit' value='Only Show Errors' onclick='showErrors()'/>
+    <input id = 'btnSubmit' type='submit' value='Show All' onclick='showAll()'/><br>
 
 
 

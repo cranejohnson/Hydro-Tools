@@ -72,6 +72,7 @@ function get_usgs_zipped($logger,$url){
              'header'=>"Accept-Encoding: gzip, compress")
       );
 
+    $logger->log("Getting USGS Data from $url",PEAR_LOG_INFO);
     $context = stream_context_create($opts);
     $start = time();
     $content = file_get_contents($url ,false,$context);
@@ -198,7 +199,7 @@ class Cache_Lite_Hydro extends Cache_Lite {
  */
 function getHADS_NWSLID_Lookup($state,$age=86400){
     global $logger;  //Global pear logger class
-    
+
     $custom[] = 'JSBA2|1505248590       | |AJK| | |MENDENHALL LAKE AT SUICIDE BASIN';
     $textdata = '';
     $sites = array();
@@ -228,7 +229,7 @@ function getHADS_NWSLID_Lookup($state,$age=86400){
         //Remove the first four lines of the file that are header information and place
         // remaining lines into an array.
         $siteInfo = array_slice(explode("\n", $textdata), 4);
-        $siteInfo = array_merge($siteInfo,$custom);  
+        $siteInfo = array_merge($siteInfo,$custom);
         $i=0;
         foreach($siteInfo as $site){
             $parts = explode("|",$site);
@@ -383,7 +384,6 @@ function getUSGS_siteInfo($url){
 
     global $logger;  //Global pear logger class
 
-
     $rdbArray =array();
     $textData = get_usgs_zipped($logger,$url);
     $lines = explode("\n", trim($textData));
@@ -454,13 +454,14 @@ function getAhpsData($siteid){
         return $ahps;
     }
 
+    $ahps['gageDatum'] = $siteData->zerodatum;
     if($siteData->observed == 'Gauge is currently out of service.'){
         $ahps[$siteid]['inService'] = false;
+
         return $ahps;
     }
 
 
-    $ahps['gageDatum'] = $siteData->zerodatum;
 
     if(isset($siteData->observed->datum)){
         foreach($siteData->observed->datum as $value){
