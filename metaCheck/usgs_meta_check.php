@@ -143,7 +143,7 @@ function convert($size)
 $usgsInfo = array();
 $opts = getoptreq('f:v:c:u', array());
 
-$file = "USGS_all_siteinfo.json";
+$file = "USGS_all_active_siteinfo.json";
 
 $usgsInfo = json_decode(file_get_contents($file),true);
 
@@ -152,7 +152,7 @@ if(isset($opts["u"]) | !$usgsInfo){
     $logger->log("Loading USGS site information.",PEAR_LOG_INFO);
     $logger->log("Current Memory Usage: ".convert(memory_get_usage()),PEAR_LOG_INFO);
     $usgsInfo = get_all_USGS_info();
-    $logger->log("Completed Updated USGS site info file: USGS_all_siteinfo.json",PEAR_LOG_INFO);
+    $logger->log("Completed Updated USGS site info file: USGS_all_active_siteinfo.json",PEAR_LOG_INFO);
     $logger->log("Current Memory Usage: ".convert(memory_get_usage()),PEAR_LOG_INFO);
 }
 
