@@ -81,6 +81,18 @@ function convert($val,$conv){
        if($parts[0] == '0gage'){
            $val = $parts[1]-$val;
        }
+       if($parts[0] == 'depth'){
+           $depth = $parts[1];
+           #convert value C-F and then to tenths of degrees
+           $dataVal = (($val*1.8)+32);
+           if($dataVal<0){
+                $depth = $depth*-1;
+                $dataVal = $dataVal*-1;
+            }    
+           $tail = abs($dataVal/1000);
+           $val = $depth+$tail;
+        }   
+           
        if ($conv == 'm:ft'){
             $val = $val*3.28083;
         }
@@ -101,7 +113,11 @@ function convert($val,$conv){
         }
         if ($conv == 'mps:mph'){
             $val = ($val*2.237);
-	}
+        }
+        if ($conv == 'kpa:inhg'){
+            $val = ($val*0.2952);
+        }
+        
 
     return $val;
 }
@@ -141,7 +157,7 @@ function returnShefString($data,$over = true){
         else{   
             $dataElement = $pe."I".$data['typeSource']."Z";
         }    
-        $string .= ".A$R ".$data['lid']." ".$data['recordTime']."/".$data['dcTime'];
+        $string .= ".A".$R." ".$data['lid']." ".$data['recordTime']."/".$data['dcTime'];
         $string .= "/".$dataElement." ".$value;
         $string .= "\n";
 
@@ -204,7 +220,24 @@ while ($row = $result->fetch_assoc()){
     $dataDelimiter = $row['delimiter'];
     
     #Get the time correction and ingest interval
-    $timeCorrection = -($row['timezone']*3600);
+    switch ($row['timezone']) {
+    case 'UTC':
+        $timeCorrection = 0;
+        break;
+    case 'AKST':
+        //site is always 9 hours offset from UTC
+        $timeCorrection = 9*3600;
+        break;
+    case 'AKDT':
+        //site follows daylights savings time for Anchorage
+        date_default_timezone_set('America/Anchorage');
+        $timeCorrection =  -date('Z');
+        date_default_timezone_set('UTC');
+        break;
+    default:
+        $timeCorrection = -($row['timezone']*3600);
+    
+}
     $interval = strtotime("2014-1-1 ".$row['ingestInterval']) -strtotime("2014-1-1 00:00:00");
 
     #Skip grabbing data if the time isn't right
@@ -283,7 +316,7 @@ while ($row = $result->fetch_assoc()){
         $shefStr = '';
 
         $firstChar = substr($line,0,1);
-        if($debug) echo $line."\n";
+        if($debug) echo "\n\nFile Data:\n".$line."\n\n";
 
 
         
@@ -345,7 +378,7 @@ while ($row = $result->fetch_assoc()){
         $shefData['dcTime'] = date('\D\CymdHi');
 
 
-        if($debug) echo $shefData['recordTime']."\n";
+        if($debug) echo "Decoded Record Time:".$shefData['recordTime']."\n";
 
         #Check and see if this row is new data....if not continue to the next row of data
         if(($recordTime <= strtotime($row['lastRecordDatetime'])) && ($shefData['lid'] != 'MULTI')){
@@ -389,9 +422,14 @@ while ($row = $result->fetch_assoc()){
 
             #If there is no value move on the the next value in the data string
             if(!isset($data[$i])){
-                continue;   #Go to next data value
+                continue;   #Go to the next data value
             }
-
+            
+            #If there is no data move on to the next value in the data string
+            if($data[$i] == ''){
+                continue;   #go to the next data value
+            }
+            
             $value = trim($data[$i]);
             #if($debug) echo $value;
             #If the value is null replace it with missing
@@ -407,8 +445,13 @@ while ($row = $result->fetch_assoc()){
             #Get the unit conversion and convert data if required
             preg_match('/\[(.+)\]/',$code,$match);
             if(isset($match[1])) $value = convert($value,$match[1]);
-
-            $shefData['data'][$pe] = round($value,2);
+            
+            if(substr($pe,0,2) == "TV"){
+                $shefData['data'][$pe] = round($value,4);
+            }
+            else{
+                $shefData['data'][$pe] = round($value,2);
+            }        
             $hasData++;
 
         }
@@ -426,7 +469,7 @@ while ($row = $result->fetch_assoc()){
             $numLines++;
             $siteLines++;
             if(isset($shefData['data'])) $shefFile .= returnShefString($shefData,false);
-            if($debug) echo "\nShef String: ".returnShefString($shefData,true);
+            if($debug) echo "\nShef String:\n".returnShefString($shefData,true);
         }
 
     }
