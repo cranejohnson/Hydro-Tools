@@ -99,6 +99,8 @@
             }
 
             function filter(value){
+                value = value.toLowerCase();
+                console.log(value);
                 if(value.length <1){
                     $('#myTable tbody tr').each(function() {
                         this.style.display = '';
@@ -120,7 +122,7 @@
              {
                 $.ajax({
                     type: "GET",
-                    url: "output/All_meta_check.csv",
+                    url: "All_meta_check.csv",
                     success: function (data) {
                         $('#tableDiv').html(arrayToTable(Papa.parse(data).data));
                         $('#myTable').tablesorter();
@@ -336,9 +338,10 @@
     NWS Source: AHPS xml data<br>
     USGS Source: http://waterservices.usgs.gov/rest/Site-Service.html<br>
     HADS Source: http://www.nws.noaa.gov/oh/hads/USGS/ALL_USGS-HADS_SITES.txt<br><br>
-    Highlight Distance: <input type='text' id='distance' value='0.1' size = '5' onChange='checkDistance();'>miles (<span id='distNum'></span>)<br>
-    WFO/RFC Filter:  <input type='text' id='filterVal' value='' size = '5' onChange='filter(this.value);'><br>
+    Highlight sites that are further apart than: <input type='text' id='distance' value='0.1' size = '5' onChange='checkDistance();'>miles (<span id='distNum'></span>)<br>
+    Select WFO/RFC Filter:  <input type='text' id='filterVal' value='' size = '5' onChange='filter(this.value);'><br>
     <input id = 'btnSubmit' type='submit' value='Only Show Errors' onclick='showErrors()'/>
     <input id = 'btnSubmit' type='submit' value='Show All' onclick="filter($('#filterVal').val());"/><br>
+    <i>AHPS_datum is based on the 'zerodatum' listed in the XML file and shown in the bottom left corner of the graph</i>
     <div id = 'tableDiv'><H4>LOADING TABLE......</HR></div>
 </html>
