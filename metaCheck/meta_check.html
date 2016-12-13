@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+    <html>
+
+        <script type='text/javascript' src='http://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js'></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.js"></script>
+        <script type='text/javascript' src='http://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.9.1/jquery.tablesorter.min.js'></script>
+
+
+
+
+        <script>
+            function arrayToTable(tableData) {
+                var table = $('<table id="myTable" class="tablesorter"></table>');
+                var thead = $('<thead></thead>');
+                var rowData = tableData.shift();
+                var row = $('<tr></tr>');
+                var header = [];
+                $(rowData).each(function (j, cellData) {
+                    row.append($('<th>'+cellData+'</th>'));
+                    header.push(cellData);
+                });
+                thead.append(row);
+                table.append(thead);
+                var tbody = $('<tbody></tbody>');
+
+                $(tableData).each(function (i, rowData) {
+                    var row = $('<tr></tr>');
+                    var j = 0;
+                    $(rowData).each(function (j, cellData) {
+                        row.append($('<td class="'+header[j]+'">'+cellData+'</td>'));
+                    });
+                    tbody.append(row);
+                });
+                table.append(tbody);
+                return table;
+            }
+
+            function checkDatum(){
+                $('#myTable').find('tr').each(function(){
+                    var usgsDatum = $(this).find('td.USGS_datum').text();
+                    var ahps = $(this).find('td.AHPS_datum').text();
+                    var ahpsUSGS = $(this).find('td.AHPS_USGS_ID').text();
+                    var hadsUSGS = $(this).find('td.HADS_USGS_ID').text();
+                    var ahpsRefDat = $(this).find('td.AHPS_refDatum').text();
+                    var usgsRefDat = $(this).find('td.USGS_refDatum').text();
+
+                    if((parseFloat(hadsUSGS)>0) && (ahpsUSGS != hadsUSGS)){
+                        $(this).find('td.AHPS_USGS_ID').addClass('error');
+                        $(this).find('td.HADS_USGS_ID').addClass('error');
+                    }
+
+                    if((usgsDatum != ahps) && (parseFloat(usgsDatum) > 0)){
+                        if(parseFloat(ahps) == 0){
+                            $(this).find('td.AHPS_datum').addClass('warning');
+                            $(this).find('td.USGS_datum').addClass('warning');
+                            if(ahpsRefDat != usgsRefDat){
+                                $(this).find('td.AHPS_refDatum').addClass('warning');
+                                $(this).find('td.USGS_refDatum').addClass('warning');
+                             }
+                        }else{
+                            if(ahpsRefDat != usgsRefDat){
+                                $(this).find('td.AHPS_refDatum').addClass('error');
+                                $(this).find('td.USGS_refDatum').addClass('error');
+                             }
+                            $(this).find('td.AHPS_datum').addClass('error');
+                            $(this).find('td.USGS_datum').addClass('error');
+                        }
+                    }
+                });
+             }
+
+
+            function checkDistance(){
+                var numWrong = 0;
+                $('#myTable tr td.NWS_USGS_Distance').each(function() {
+                    if ($(this).text() > $('#distance').val()) {
+                        $(this).addClass('error');
+                        numWrong = numWrong + 1;
+                   }
+                    else{
+                        $(this).removeClass('error');
+                    }
+                });
+                $('#distNum').text(numWrong);
+            }
+
+            function showErrors(){
+                $('#myTable tbody tr:visible').each(function() {
+                    showRow = false;
+                    $(this).find('td').each(function(){
+                        if($(this).hasClass( 'error' )){
+                            showRow = true;
+                        }
+                    });
+                    if(!showRow){
+                         this.style.display = 'none';
+                    }
+                });
+            }
+
+            function filter(value){
+                if(value.length <1){
+                    $('#myTable tbody tr').each(function() {
+                        this.style.display = '';
+                    });
+                    return;
+                }
+                $('#myTable tbody tr').each(function() {
+                    if($(this).find('td').eq(1).text().indexOf(value) == 0 | $(this).find('td').eq(2).text().indexOf(value) == 0){
+                        this.style.display = '';
+                    }else{
+                        this.style.display = 'none';
+                    }
+                });
+            }
+
+
+
+            $(document).ready(function()
+             {
+                $.ajax({
+                    type: "GET",
+                    url: "output/All_meta_check.csv",
+                    success: function (data) {
+                        $('#tableDiv').html(arrayToTable(Papa.parse(data).data));
+                        $('#myTable').tablesorter();
+                        checkDistance();
+                        checkDatum();
+                    }
+                });
+
+                //$('#myTable').fadeIn(2000);
+
+
+
+            });
+
+
+
+        </script>
+        <style>
+
+           /*************
+            Default Theme
+            *************/
+            /* overall */
+            .tablesorter-default {
+                width: 100%;
+                font: 12px/18px Arial, Sans-serif;
+                color: #333;
+                background-color: #fff;
+                border-spacing: 0;
+                margin: 10px 0 15px;
+                text-align: left;
+            }
+
+            /* header */
+            .tablesorter-default th,
+            .tablesorter-default thead td {
+                font-weight: bold;
+                color: #000;
+                background-color: #fff;
+                border-collapse: collapse;
+                border-bottom: #ccc 2px solid;
+                padding: 0;
+            }
+            .tablesorter-default tfoot th,
+            .tablesorter-default tfoot td {
+                border: 0;
+            }
+            .tablesorter-default .header,
+            .tablesorter-default .tablesorter-header {
+                background-image: url(data:image/gif;base64,R0lGODlhFQAJAIAAACMtMP///yH5BAEAAAEALAAAAAAVAAkAAAIXjI+AywnaYnhUMoqt3gZXPmVg94yJVQAAOw==);
+                background-position: center right;
+                background-repeat: no-repeat;
+                cursor: pointer;
+                white-space: normal;
+                padding: 4px 20px 4px 4px;
+            }
+            .tablesorter-default thead .headerSortUp,
+            .tablesorter-default thead .tablesorter-headerSortUp,
+            .tablesorter-default thead .tablesorter-headerAsc {
+                background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAACMtMP///yH5BAEAAAEALAAAAAAVAAQAAAINjI8Bya2wnINUMopZAQA7);
+                border-bottom: #000 2px solid;
+            }
+            .tablesorter-default thead .headerSortDown,
+            .tablesorter-default thead .tablesorter-headerSortDown,
+            .tablesorter-default thead .tablesorter-headerDesc {
+                background-image: url(data:image/gif;base64,R0lGODlhFQAEAIAAACMtMP///yH5BAEAAAEALAAAAAAVAAQAAAINjB+gC+jP2ptn0WskLQA7);
+                border-bottom: #000 2px solid;
+            }
+            .tablesorter-default thead .sorter-false {
+                background-image: none;
+                cursor: default;
+                padding: 4px;
+            }
+
+            /* tfoot */
+            .tablesorter-default tfoot .tablesorter-headerSortUp,
+            .tablesorter-default tfoot .tablesorter-headerSortDown,
+            .tablesorter-default tfoot .tablesorter-headerAsc,
+            .tablesorter-default tfoot .tablesorter-headerDesc {
+                border-top: #000 2px solid;
+            }
+
+            /* tbody */
+            .tablesorter-default td {
+                background-color: #fff;
+                border-bottom: #ccc 1px solid;
+                padding: 4px;
+                vertical-align: top;
+            }
+
+            /* table processing indicator */
+            .tablesorter-default .tablesorter-processing {
+                background-position: center center !important;
+                background-repeat: no-repeat !important;
+                /* background-image: url(images/loading.gif) !important; */
+                background-image: url('data:image/gif;base64,R0lGODlhFAAUAKEAAO7u7lpaWgAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQBCgACACwAAAAAFAAUAAACQZRvoIDtu1wLQUAlqKTVxqwhXIiBnDg6Y4eyx4lKW5XK7wrLeK3vbq8J2W4T4e1nMhpWrZCTt3xKZ8kgsggdJmUFACH5BAEKAAIALAcAAAALAAcAAAIUVB6ii7jajgCAuUmtovxtXnmdUAAAIfkEAQoAAgAsDQACAAcACwAAAhRUIpmHy/3gUVQAQO9NetuugCFWAAAh+QQBCgACACwNAAcABwALAAACE5QVcZjKbVo6ck2AF95m5/6BSwEAIfkEAQoAAgAsBwANAAsABwAAAhOUH3kr6QaAcSrGWe1VQl+mMUIBACH5BAEKAAIALAIADQALAAcAAAIUlICmh7ncTAgqijkruDiv7n2YUAAAIfkEAQoAAgAsAAAHAAcACwAAAhQUIGmHyedehIoqFXLKfPOAaZdWAAAh+QQFCgACACwAAAIABwALAAACFJQFcJiXb15zLYRl7cla8OtlGGgUADs=') !important;
+            }
+
+            /* Zebra Widget - row alternating colors */
+            .tablesorter-default tr.odd > td {
+                background-color: #dfdfdf;
+            }
+            .tablesorter-default tr.even > td {
+                background-color: #efefef;
+            }
+
+            /* Column Widget - column sort colors */
+            .tablesorter-default tr.odd td.primary {
+                background-color: #bfbfbf;
+            }
+            .tablesorter-default td.primary,
+            .tablesorter-default tr.even td.primary {
+                background-color: #d9d9d9;
+            }
+            .tablesorter-default tr.odd td.secondary {
+                background-color: #d9d9d9;
+            }
+            .tablesorter-default td.secondary,
+            .tablesorter-default tr.even td.secondary {
+                background-color: #e6e6e6;
+            }
+            .tablesorter-default tr.odd td.tertiary {
+                background-color: #e6e6e6;
+            }
+            .tablesorter-default td.tertiary,
+            .tablesorter-default tr.even td.tertiary {
+                background-color: #f2f2f2;
+            }
+
+            /* caption */
+            caption {
+                background-color: #fff;
+            }
+
+            /* filter widget */
+            .tablesorter-default .tablesorter-filter-row {
+                background-color: #eee;
+            }
+            .tablesorter-default .tablesorter-filter-row td {
+                background-color: #eee;
+                border-bottom: #ccc 1px solid;
+                line-height: normal;
+                text-align: center; /* center the input */
+                -webkit-transition: line-height 0.1s ease;
+                -moz-transition: line-height 0.1s ease;
+                -o-transition: line-height 0.1s ease;
+                transition: line-height 0.1s ease;
+            }
+            /* optional disabled input styling */
+            .tablesorter-default .tablesorter-filter-row .disabled {
+                opacity: 0.5;
+                filter: alpha(opacity=50);
+                cursor: not-allowed;
+            }
+            /* hidden filter row */
+            .tablesorter-default .tablesorter-filter-row.hideme td {
+                /*** *********************************************** ***/
+                /*** change this padding to modify the thickness     ***/
+                /*** of the closed filter row (height = padding x 2) ***/
+                padding: 2px;
+                /*** *********************************************** ***/
+                margin: 0;
+                line-height: 0;
+                cursor: pointer;
+            }
+            .tablesorter-default .tablesorter-filter-row.hideme * {
+                height: 1px;
+                min-height: 0;
+                border: 0;
+                padding: 0;
+                margin: 0;
+                /* don't use visibility: hidden because it disables tabbing */
+                opacity: 0;
+                filter: alpha(opacity=0);
+            }
+            /* filters */
+            .tablesorter-default input.tablesorter-filter,
+            .tablesorter-default select.tablesorter-filter {
+                width: 95%;
+                height: auto;
+                margin: 4px auto;
+                padding: 4px;
+                background-color: #fff;
+                border: 1px solid #bbb;
+                color: #333;
+                -webkit-box-sizing: border-box;
+                -moz-box-sizing: border-box;
+                box-sizing: border-box;
+                -webkit-transition: height 0.1s ease;
+                -moz-transition: height 0.1s ease;
+                -o-transition: height 0.1s ease;
+                transition: height 0.1s ease;
+            }
+            /* rows hidden by filtering (needed for child rows) */
+            .tablesorter .filtered {
+                display: none;
+            }
+
+            /* ajax error row */
+            .tablesorter .tablesorter-errorRow td {
+                text-align: center;
+                cursor: pointer;
+                background-color: #e6bf99;
+            }
+            td.error {
+                background-color: #e6bf99;
+            }
+            td.warning {
+                background-color: #F5F5F5;
+            }
+        </style>
+
+    NWS Source: AHPS xml data<br>
+    USGS Source: http://waterservices.usgs.gov/rest/Site-Service.html<br>
+    HADS Source: http://www.nws.noaa.gov/oh/hads/USGS/ALL_USGS-HADS_SITES.txt<br><br>
+    Highlight Distance: <input type='text' id='distance' value='0.1' size = '5' onChange='checkDistance();'>miles (<span id='distNum'></span>)<br>
+    WFO/RFC Filter:  <input type='text' id='filterVal' value='' size = '5' onChange='filter(this.value);'><br>
+    <input id = 'btnSubmit' type='submit' value='Only Show Errors' onclick='showErrors()'/>
+    <input id = 'btnSubmit' type='submit' value='Show All' onclick="filter($('#filterVal').val());"/><br>
+    <div id = 'tableDiv'><H4>LOADING TABLE......</HR></div>
+</html>
