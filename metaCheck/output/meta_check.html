@@ -25,8 +25,14 @@
 
                 $(tableData).each(function (i, rowData) {
                     var row = $('<tr></tr>');
+
                     var j = 0;
                     $(rowData).each(function (j, cellData) {
+                        if(header[j] == 'AHPS_ID'){
+                            cellData = "<a href = 'http://water.weather.gov/ahps2/hydrograph.php?gage="+cellData+"' target='_blank'>"+cellData+"</a>";
+                        }
+                        if(header[j] == 'USGS_accuracy'){
+                            cellData = "&#177;"+cellData+" ft";                       }
                         row.append($('<td class="'+header[j]+'">'+cellData+'</td>'));
                     });
                     tbody.append(row);

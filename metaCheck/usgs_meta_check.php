@@ -298,6 +298,7 @@ foreach($ahpsReport['sites'] as $site){
         'AHPS_lon' => '',
         'NWS_USGS_Distance' => '',
         'USGS_datum' => '',
+        'USGS_accuracy' => '',
         'USGS_refDatum' => '',
         'AHPS_datum'=> '',
         'AHPS_refDatum' =>''
@@ -339,6 +340,7 @@ foreach($ahpsReport['sites'] as $site){
             $array['USGS_lon'] = floatval($usgsInfo[$nwsUSGS]['dec_long_va']);
             $array['USGS_datum'] = floatval($usgsInfo[$nwsUSGS]['alt_va']);
             $array['USGS_refDatum'] = $usgsInfo[$nwsUSGS]['alt_datum_cd'];
+            $array['USGS_accuracy'] = floatval($usgsInfo[$nwsUSGS]['alt_acy_va']);
 
         }
         else{
@@ -348,6 +350,7 @@ foreach($ahpsReport['sites'] as $site){
                 $array['USGS_lon'] = floatval($usgs[$nwsUSGS]['dec_long_va']);
                 $array['USGS_datum'] = floatval($usgs[$nwsUSGS]['alt_va']);
                 $array['USGS_refDatum'] = $usgs[$nwsUSGS]['alt_datum_cd'];
+                $array['USGS_accuracy'] = floatval($usgs[$nwsUSGS]['alt_acy_va']);
             }
         }
 
@@ -359,7 +362,7 @@ foreach($ahpsReport['sites'] as $site){
 
     if(isset($AHPSjson[$nwslid])){
         $logger->log("Loading AHPS data for: $nwslid from file",PEAR_LOG_INFO);
-        $array['AHPS_datum'] = floatval($AHPSjson[$nwslid]['zd']);
+        if(strlen($AHPSjson[$nwslid]['zd'])>0) $array['AHPS_datum'] = floatval($AHPSjson[$nwslid]['zd']);
         $array['AHPS_lat'] = floatval($AHPSjson[$nwslid]['lat']);
         $array['AHPS_lon'] = floatval($AHPSjson[$nwslid]['lon']);
         $array['AHPS_refDatum'] = trim($AHPSjson[$nwslid]['vdatum'],'"');

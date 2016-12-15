@@ -75,7 +75,7 @@ function get_usgs_zipped($logger,$url){
     $logger->log("Getting USGS Data from $url",PEAR_LOG_INFO);
     $context = stream_context_create($opts);
     $start = time();
-    $content = file_get_contents($url ,false,$context);
+    $content = @file_get_contents($url ,false,$context);
     if ($content === false) {
        $logger->log("Failed to get USGS Data from $url",PEAR_LOG_ERR);
        return false;
