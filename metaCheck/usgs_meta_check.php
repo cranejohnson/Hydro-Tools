@@ -322,7 +322,7 @@ foreach($ahpsReport['sites'] as $site){
 
     $nwsUSGS = $site['usgsid'];
     if(!isset($hadsData['sites'][$nwslid])){
-        $logger->log("$nwslid: Not a HADS Site",PEAR_LOG_INFO);
+        $logger->log("$nwslid: Not a HADS Site",PEAR_LOG_DEBUG);
     }else{
         $array['HADS_USGS_ID'] = $hadsData['sites'][$nwslid]['usgs'];
         $nwsUSGS = $array['HADS_USGS_ID'] ;
@@ -361,7 +361,7 @@ foreach($ahpsReport['sites'] as $site){
 
 
     if(isset($AHPSjson[$nwslid])){
-        $logger->log("Loading AHPS data for: $nwslid from file",PEAR_LOG_INFO);
+        $logger->log("Loading AHPS data for: $nwslid from file",PEAR_LOG_DEBUG);
         if(strlen($AHPSjson[$nwslid]['zd'])>0) $array['AHPS_datum'] = floatval($AHPSjson[$nwslid]['zd']);
         $array['AHPS_lat'] = floatval($AHPSjson[$nwslid]['lat']);
         $array['AHPS_lon'] = floatval($AHPSjson[$nwslid]['lon']);

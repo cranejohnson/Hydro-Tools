@@ -608,7 +608,7 @@ function getAHPSreport($age = 86400,$filter = null){
             $nws = strtoupper($parts[3]);
             $i=0;
             foreach($resultArray['columns'] as $col){
-                $resultArray['sites'][$nws][$col] = $parts[$i];
+                if(isset($parts[$i])) $resultArray['sites'][$nws][$col] = $parts[$i];
                 $i++;
             }
             $resultArray['sites'][$nws]['name'] = $parts[2]." ".$parts[1]." ".$parts[0];
