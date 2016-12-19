@@ -14,6 +14,7 @@ $ignoreSites = array("SCJA2");
 chdir(dirname(__FILE__));
 
 
+
 /* Include config file for paths etc..... */
 require_once('../config.inc.php');
 
@@ -150,6 +151,14 @@ function findDiff($ahpsSite,$usgsSite,$param){
 $usgsPeriod = 'P7D';
 
 $logger->log("START",PEAR_LOG_INFO);
+
+
+if(copy("show_all.php","/hd1apps/data/intranet/html/tools/gagecompare/show_all.php")){
+    $logger->log("Copied 'showall.php' to output location.",PEAR_LOG_INFO);
+}else{
+    $logger->log("Failed to copy 'showall.php' to output location.",PEAR_LOG_INFO);
+}
+
 
 $opts = getoptreq('a:s:g', array());
 

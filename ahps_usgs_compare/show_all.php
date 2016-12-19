@@ -77,8 +77,8 @@ foreach ($fileList as $file){
 	echo "<td><a name='$nwsid' ></a>\n";
 	echo "<div id='$usgsid'></div><a href='http://water.weather.gov/ahps2/hydrograph.php?gage=$nwsid' target = '_blank'>Link to AHPS $nwsid</a>&nbsp&nbsp\n";
 	echo "<a href='http://waterdata.usgs.gov/nwis/uv/?site_no=$usgsid' target = '_blank'>Link to USGS $usgsid</a>\n";
-    echo "&nbsp&nbsp&nbsp<a href='../ratViewer.php?USGS=$usgsid' target='_blank'>Rating Viewer</a>";
-    echo "&nbsp&nbsp&nbsp<a href='http://amazon.nws.noaa.gov/cgi-bin/hads/interactiveDisplays/displayMetaData.pl?table=dcp&nwsli=$nwsid' target='_blank'>HADS Page</a>";
+        echo "&nbsp&nbsp&nbsp<a href='../ratings/ratViewer.php?USGS=$usgsid' target='_blank'>Rating Viewer</a>";
+        echo "&nbsp&nbsp&nbsp<a href='http://amazon.nws.noaa.gov/cgi-bin/hads/interactiveDisplays/displayMetaData.pl?table=dcp&nwsli=$nwsid' target='_blank'>HADS Page</a>";
 	echo "&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<a href='#'>Jump to Top</a></br>\n";
 	echo "<img id='$nwsid' src='$file'>\n";
     echo '<br>Jump to a site: <input id=\''.$nwsid.'_nav\' type="text" onBlur="goTo($(this).val());" ><i> Enter USGS or NWS ID</a>';
