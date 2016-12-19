@@ -20,7 +20,7 @@
 chdir(dirname(__FILE__));
 
 /* Include config file for paths etc..... */
-require_once('../config.inc.php');
+require_once("../config.inc.php");
 
 
 /* Kludge to get additional lookups into table
@@ -48,9 +48,9 @@ require_once(RESOURCES_DIRECTORY."web_functions.php");
 ini_set('memory_limit', '512M');
 
 //Pear log package
-require_once (PROJECT_ROOT.'/resources/Pear/Log.php');
+require_once(RESOURCES_DIRECTORY.'Pear/Log.php');
 //Pear cache_lite package
-require_once(PROJECT_ROOT.'/resources/Pear/Cache/Lite.php');
+require_once(RESOURCES_DIRECTORY.'Pear/Cache/Lite.php');
 
 
 /**
@@ -108,7 +108,7 @@ foreach($customLookup as $usgs => $nwslid){
 
 
 //Handle the command line arguments
-$opts = getoptreq('a:p:t:flr', array());
+$opts = getoptreq('a:p:t:flro:', array());
 
 if(!isset($opts["p"])){
     $period = 'P1D';
@@ -175,15 +175,23 @@ $shefFile = '';
 //Check if the -l (local) option is flagged
 //if not add the correct header to the file.
 if(isset($opts["l"])){
-    $fileName = "USGSdischarge.".date('ymdHis');
+    $fileName = TO_LDAD."USGSdischarge.".date('ymdHis');
     $logger->log("Local Shef File",PEAR_LOG_INFO);
 }
 else{
-    $fileName = "sheffile.USGS.".date('ymdHis');
+    $fileName = TO_LDAD."sheffile.USGS.".date('ymdHis');
     $shefFile = SHEF_HEADER;
     $logger->log("Shef File with Header",PEAR_LOG_INFO);
 }
 
+if(isset($opts["o"])){
+    $fileName = $opts["o"];
+    $logger->log("Local Shef File: $fileName",PEAR_LOG_INFO);
+}
+else{
+    $fileName = TO_LDAD."sheffile.USGS.".date('ymdHis');
+    $logger->log("File will be pushed to LDAD",PEAR_LOG_INFO);
+}
 
 
 
@@ -335,7 +343,7 @@ if (!file_exists(TO_LDAD)) {
 }
 
 if ($linesInShef) {
-    if(file_put_contents(TO_LDAD.$fileName, $shefFile)){
+    if(file_put_contents($fileName, $shefFile)){
         $logger->log("File (".$fileName.") saved in LDAD directory",PEAR_LOG_INFO);
     }
     else{
