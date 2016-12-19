@@ -56,20 +56,20 @@
                     }
 
                     if((usgsDatum != ahps) && (parseFloat(usgsDatum) > 0)){
-                        if(parseFloat(ahps) == 0){
-                            $(this).find('td.AHPS_datum').addClass('warning');
-                            $(this).find('td.USGS_datum').addClass('warning');
-                            if(ahpsRefDat != usgsRefDat){
-                                $(this).find('td.AHPS_refDatum').addClass('warning');
-                                $(this).find('td.USGS_refDatum').addClass('warning');
-                             }
-                        }else{
+                        if(parseFloat(ahps) > 0){
+                            $(this).find('td.AHPS_datum').addClass('error');
+                            $(this).find('td.USGS_datum').addClass('error');
                             if(ahpsRefDat != usgsRefDat){
                                 $(this).find('td.AHPS_refDatum').addClass('error');
                                 $(this).find('td.USGS_refDatum').addClass('error');
                              }
-                            $(this).find('td.AHPS_datum').addClass('error');
-                            $(this).find('td.USGS_datum').addClass('error');
+                        }else{
+                            if(ahpsRefDat != usgsRefDat){
+                                $(this).find('td.AHPS_refDatum').addClass('warning');
+                                $(this).find('td.USGS_refDatum').addClass('warning');
+                             }
+                            $(this).find('td.AHPS_datum').addClass('warning');
+                            $(this).find('td.USGS_datum').addClass('warning');
                         }
                     }
                 });
@@ -340,7 +340,7 @@
                 background-color: #F5F5F5;
             }
         </style>
-    <a href="https://docs.google.com/a/noaa.gov/document/d/1iqR8rKaPrMe1phQTM1BoLeBevaehcXmANnOQiX6xHSM/edit?usp=sharing">Column Definitions and Meta Check Description</a>
+    <a href="https://docs.google.com/a/noaa.gov/document/d/1iqR8rKaPrMe1phQTM1BoLeBevaehcXmANnOQiX6xHSM/edit?usp=sharing">Column Definitions and Meta Check Description</a><br>
     Highlight sites that are further apart than: <input type='text' id='distance' value='0.1' size = '5' onChange='checkDistance();'>miles (<span id='distNum'></span>)<br>
     Select WFO/RFC Filter:  <input type='text' id='filterVal' value='' size = '5' onChange='filter(this.value);'><br>
     <input id = 'btnSubmit' type='submit' value='Only Show Errors' onclick='showErrors()'/>
