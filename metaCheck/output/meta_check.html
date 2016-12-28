@@ -69,13 +69,13 @@
                             $(this).find('td.NRLDB_datum').addClass('error');
                             $(this).find('td.USGS_datum').addClass('errorOut');
                             nrldbErrorNum = nrldbErrorNum + 1;
-                            if(NRLDBdatumName != usgsDatumName){
+                            if((NRLDBdatumName != usgsDatumName)  && (NRLDBdatumName.length > 0)){
                                 $(this).find('td.NRLDB_datumName').addClass('error');
                                 $(this).find('td.USGS_datumName').addClass('errorOut');
                              }
                         }
                     }else{
-                        if((NRLDBdatumName != usgsDatumName) && (NRLDBdatum.length>0) && (usgsDatum.length >0)){
+                        if((NRLDBdatumName != usgsDatumName) && (NRLDBdatum.length>0) && (usgsDatum.length >0) && (NRLDBdatumName.length > 0)){
                             $(this).find('td.NRLDB_datumName').addClass('error');
                             $(this).find('td.USGS_datumName').addClass('errorOut');
                             nrldbErrorNum = nrldbErrorNum + 1;

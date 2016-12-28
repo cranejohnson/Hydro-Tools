@@ -261,7 +261,6 @@ foreach($ahpsReport['sites'] as $site){
         'AHPS_lon' => $site['longitude'],
         'NWS_USGS_Distance' => '',
         'USGS_datum' => '',
-        #'USGS_accuracy' => '',
         'USGS_datumName' => '',
         'NRLDB_datum'=> $site['nrldbverticaldatum'],
         'NRLDB_datumName' => $site['nrldbverticaldatumname'],
