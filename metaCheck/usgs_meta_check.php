@@ -22,9 +22,6 @@ define('OUTPUT_FOLDER','output/');
 require_once(RESOURCES_DIRECTORY."web_functions.php");
 
 
-/* Include rating library file */
-//require_once '../ratings/rating_lib.php';
-
 /**
  * Update php settings
  */
@@ -106,35 +103,6 @@ function calcDistance($lat1, $lon1, $lat2, $lon2, $unit) {
     }
 }
 
-function csvToArray($fname) {
-    // open csv file
-    if (!($fp = fopen($fname, 'r'))) {
-        die("Can't open file...");
-    }
-
-    //read csv headers
-    $key = fgetcsv($fp,"1024",",");
-    array_shift($key);
-    $len = count($key);
-    // parse csv rows into array
-    $json = array();
-        while ($row = fgetcsv($fp,"1024",",")) {
-        $id = array_shift($row);
-        //A comma may exist in column 3, this needs to be handled if number of rows is too high
-        if(count($row) > $len){
-            $row[3] = $row[3].$row[4];
-            $row[4] = $row[5];
-            array_pop($row);
-        }
-        $json[$id] = array_combine($key, $row);
-    }
-
-    // release file handle
-    fclose($fp);
-
-    // encode array to json
-    return $json;
-}
 
 function get_all_USGS_info(){
     $states = array('AK'=>'Alaska', 'HI'=>'Hawaii', 'CA'=>'California', 'NV'=>'Nevada', 'OR'=>'Oregon', 'WA'=>'Washington', 'AZ'=>'Arizona', 'CO'=>'Colorada', 'ID'=>'Idaho', 'MT'=>'Montana', 'NE'=>'Nebraska', 'NM'=>'New Mexico', 'ND'=>'North Dakota', 'UT'=>'Utah', 'WY'=>'Wyoming', 'AL'=>'Alabama', 'AR'=>'Arkansas', 'IL'=>'Illinois', 'IA'=>'Iowa', 'KS'=>'Kansas', 'KY'=>'Kentucky', 'LA'=>'Louisiana', 'MN'=>'Minnesota', 'MS'=>'Mississippi', 'MO'=>'Missouri', 'OK'=>'Oklahoma', 'SD'=>'South Dakota', 'TX'=>'Texas', 'TN'=>'Tennessee', 'WI'=>'Wisconsin', 'CT'=>'Connecticut', 'DE'=>'Delaware', 'FL'=>'Florida', 'GA'=>'Georgia', 'IN'=>'Indiana', 'ME'=>'Maine', 'MD'=>'Maryland', 'MA'=>'Massachusetts', 'MI'=>'Michigan', 'NH'=>'New Hampshire', 'NJ'=>'New Jersey', 'NY'=>'New York', 'NC'=>'North Carolina', 'OH'=>'Ohio', 'PA'=>'Pennsylvania', 'RI'=>'Rhode Island', 'SC'=>'South Carolina', 'VT'=>'Vermont', 'VA'=>'Virginia', 'WV'=>'West Virginia');
@@ -257,9 +225,6 @@ if(strtoupper($value) == 'ALL'){
 $hadsData = array();
 
 
-
-
-
 $output = fopen($id, "w");
 
 
@@ -270,14 +235,12 @@ $logger->log("Creating new meta data compare table.",PEAR_LOG_INFO);
 //$filter = null;
 $ahpsReport = getAHPSreport($cache_age,$filter);
 
+
 $hadsData = getHADS_NWSLID_Lookup('ALL',$cache_age);
 
 
 /* Process each site */
 $siteNum = 0;
-if(file_exists("custom_all.csv")){
-    $AHPSjson = csvToArray("custom_all.csv");
-}
 
 foreach($ahpsReport['sites'] as $site){
 
@@ -288,20 +251,24 @@ foreach($ahpsReport['sites'] as $site){
 
     $array = array(
         'AHPS_ID' => $nwslid,
-        'rfc' => '',
-        'wfo' => '',
-        'AHPS_USGS_ID' => '',
+        'rfc' => $site['rfc'],
+        'wfo' => $site['wfo'],
+        'AHPS_USGS_ID' => $site['usgsid'],
         'HADS_USGS_ID' => '',
         'USGS_lat' => '',
         'USGS_lon' =>'',
-        'AHPS_lat' => '',
-        'AHPS_lon' => '',
+        'AHPS_lat' => $site['latitude'],
+        'AHPS_lon' => $site['longitude'],
         'NWS_USGS_Distance' => '',
         'USGS_datum' => '',
         #'USGS_accuracy' => '',
-        'USGS_refDatum' => '',
-        'AHPS_datum'=> '',
-        'AHPS_refDatum' =>''
+        'USGS_datumName' => '',
+        'NRLDB_datum'=> $site['nrldbverticaldatum'],
+        'NRLDB_datumName' => $site['nrldbverticaldatumname'],
+        'AHPSnavd88' => $site['navd88verticaldatum'],
+        'AHPSngvd29' => $site['ngvd29verticaldatum'],
+        'AHPSmsl' => $site['mslverticaldatum'],
+        'AHPSother' => $site['otherverticaldatum'],
     );
 
 
@@ -316,9 +283,6 @@ foreach($ahpsReport['sites'] as $site){
 
     /* Check to make sure the USGS id specified in the NRLBD matches the USGS ID specified by HADS.
        If this is not a Hads site continue on to the next site */
-    $array['AHPS_USGS_ID'] = $site['usgsid'];
-    $array['rfc'] = $site['rfc'];
-    $array['wfo'] = $site['wfo'];
 
     $nwsUSGS = $site['usgsid'];
     if(!isset($hadsData['sites'][$nwslid])){
@@ -338,8 +302,13 @@ foreach($ahpsReport['sites'] as $site){
         if(isset($usgsInfo[$nwsUSGS])){
             $array['USGS_lat'] = floatval($usgsInfo[$nwsUSGS]['dec_lat_va']);
             $array['USGS_lon'] = floatval($usgsInfo[$nwsUSGS]['dec_long_va']);
-            $array['USGS_datum'] = floatval($usgsInfo[$nwsUSGS]['alt_va']);
-            $array['USGS_refDatum'] = $usgsInfo[$nwsUSGS]['alt_datum_cd'];
+            if(strlen($usgsInfo[$nwsUSGS]['alt_va'])>0){
+                $array['USGS_datum'] = floatval($usgsInfo[$nwsUSGS]['alt_va']);
+            }
+            else{
+                $array['USGS_datum'] = '';
+            }
+            $array['USGS_datumName'] = $usgsInfo[$nwsUSGS]['alt_datum_cd'];
             #$array['USGS_accuracy'] = floatval($usgsInfo[$nwsUSGS]['alt_acy_va']);
 
         }
@@ -349,7 +318,7 @@ foreach($ahpsReport['sites'] as $site){
                 $array['USGS_lat'] = floatval($usgs[$nwsUSGS]['dec_lat_va']);
                 $array['USGS_lon'] = floatval($usgs[$nwsUSGS]['dec_long_va']);
                 $array['USGS_datum'] = floatval($usgs[$nwsUSGS]['alt_va']);
-                $array['USGS_refDatum'] = $usgs[$nwsUSGS]['alt_datum_cd'];
+                $array['USGS_datumName'] = $usgs[$nwsUSGS]['alt_datum_cd'];
                 #$array['USGS_accuracy'] = floatval($usgs[$nwsUSGS]['alt_acy_va']);
             }
         }
@@ -359,34 +328,6 @@ foreach($ahpsReport['sites'] as $site){
         if(strlen($nwsUSGS)>0) $logger->log("USGS id specified by for $nwslid is less than 8 characters NWS USGS id: $nwsUSGS",PEAR_LOG_INFO);
     }
 
-
-    if(isset($AHPSjson[$nwslid])){
-        $logger->log("Loading AHPS data for: $nwslid from file",PEAR_LOG_DEBUG);
-        if(strlen($AHPSjson[$nwslid]['zd'])>0) $array['AHPS_datum'] = floatval($AHPSjson[$nwslid]['zd']);
-        $array['AHPS_lat'] = floatval($AHPSjson[$nwslid]['lat']);
-        $array['AHPS_lon'] = floatval($AHPSjson[$nwslid]['lon']);
-        $array['AHPS_refDatum'] = trim($AHPSjson[$nwslid]['vdatum'],'"');
-    }else{
-        /* Try to get AHPS data....sometimes this takes more than one try */
-         for( $i=0; $i<3; $i++ ) {
-             $ahps = getAhpsData($nwslid,$logger);;
-             if( $ahps !== FALSE ) {
-                 break;
-             }
-         }
-
-        if(!$ahps){
-            $logger->log("Failed to get AHPS data for: ".$site['nwsshefid'],PEAR_LOG_ERR);
-         }else{
-            if($ahps[$nwslid]['inService']){
-                $array['AHPS_datum'] = floatval($ahps['gageDatum']);
-                $array['AHPS_lat'] = floatval($site['latitude']);
-                $array['AHPS_lon'] = floatval($site['longitude']);
-            }else{
-                $logger->log("AHPS site out of service: ".$site['nwsshefid'],PEAR_LOG_ERR);
-            }
-        }
-    }
 
     /* Compare USGS and NWS locations and flag if they are different */
     $distance = '';
@@ -408,16 +349,6 @@ foreach($ahpsReport['sites'] as $site){
 //             $array['USGS_Rating_Min'] = '';
 //             $array['USGS_Rating_Max'] = '';
 //         }
-
-
-
-    /* Create the Google static map link */
-    $mapLink = "https://maps.googleapis.com/maps/api/staticmap?center=".$site['latitude'].",".-$site['longitude']."&zoom=11&size=600x300&maptype=roadmap
-        &markers=color:blue%7Clabel:N%7C".$site['latitude'].",".-$site['longitude']."&markers=color:green%7Clabel:G%7C40.711614,-74.012318
-        &markers=color:red%7Clabel:U%7C".$array['USGS_lat'].",".$array['USGS_lon'] ."
-        &key=AIzaSyDAvZIKZZq0RfJf59QAh5ZeynMrTEF-G48";
-
-
 
 
     fputcsv($output, array_values($array));

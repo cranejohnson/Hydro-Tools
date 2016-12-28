@@ -8,4 +8,4 @@ push2Ldad.php
 getUSGSQ.state
 metaCheck/output/*.csv
 move2nids.sh
-grabbers/NWIS/*
+grabbers/getNWIS/*

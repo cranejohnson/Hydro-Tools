@@ -42,43 +42,86 @@
             }
 
             function checkDatum(){
-                $('#myTable').find('tr').each(function(){
+                var nrldbErrorNum = 0;
+                var ahpsErrorNum = 0;
+                $('#myTable').find('tr:visible').each(function(){
                     var usgsDatum = $(this).find('td.USGS_datum').text();
-                    var ahps = $(this).find('td.AHPS_datum').text();
+                    var NRLDBdatum = $(this).find('td.NRLDB_datum').text();
                     var ahpsUSGS = $(this).find('td.AHPS_USGS_ID').text();
                     var hadsUSGS = $(this).find('td.HADS_USGS_ID').text();
-                    var ahpsRefDat = $(this).find('td.AHPS_refDatum').text();
-                    var usgsRefDat = $(this).find('td.USGS_refDatum').text();
+                    var NRLDBdatumName = $(this).find('td.NRLDB_datumName').text();
+                    var usgsDatumName = $(this).find('td.USGS_datumName').text();
+                    var AHPSnavd88 = $(this).find('td.AHPSnavd88').text();
+                    var AHPSngvd29 = $(this).find('td.AHPSngvd29').text();
+
+                    NRLDBdatumName = NRLDBdatumName.replace(/\s+|19|of|OF|USGS/g, '');
+                    AHPSnavd88 = AHPSnavd88.replace(/\s+|ft|NULL/g, '');
+                    AHPSngvd29 = AHPSngvd29.replace(/\s+|ft|NULL/g, '');
 
                     if((parseFloat(hadsUSGS)>0) && (ahpsUSGS != hadsUSGS)){
                         $(this).find('td.AHPS_USGS_ID').addClass('error');
                         $(this).find('td.HADS_USGS_ID').addClass('error');
                     }
 
-                    if((usgsDatum != ahps) && (parseFloat(usgsDatum) > 0)){
-                        if(parseFloat(ahps) > 0){
-                            $(this).find('td.AHPS_datum').addClass('error');
-                            $(this).find('td.USGS_datum').addClass('error');
-                            if(ahpsRefDat != usgsRefDat){
-                                $(this).find('td.AHPS_refDatum').addClass('error');
-                                $(this).find('td.USGS_refDatum').addClass('error');
+                    /* Check the USGS and NRLDB datums */
+                    if((usgsDatum != NRLDBdatum) && (usgsDatum.length > 0)){
+                        if(parseFloat(NRLDBdatum) > 0){
+                            $(this).find('td.NRLDB_datum').addClass('error');
+                            $(this).find('td.USGS_datum').addClass('errorOut');
+                            nrldbErrorNum = nrldbErrorNum + 1;
+                            if(NRLDBdatumName != usgsDatumName){
+                                $(this).find('td.NRLDB_datumName').addClass('error');
+                                $(this).find('td.USGS_datumName').addClass('errorOut');
                              }
-                        }else{
-                            if(ahpsRefDat != usgsRefDat){
-                                $(this).find('td.AHPS_refDatum').addClass('warning');
-                                $(this).find('td.USGS_refDatum').addClass('warning');
-                             }
-                            $(this).find('td.AHPS_datum').addClass('warning');
-                            $(this).find('td.USGS_datum').addClass('warning');
+                        }
+                    }else{
+                        if((NRLDBdatumName != usgsDatumName) && (NRLDBdatum.length>0) && (usgsDatum.length >0)){
+                            $(this).find('td.NRLDB_datumName').addClass('error');
+                            $(this).find('td.USGS_datumName').addClass('errorOut');
+                            nrldbErrorNum = nrldbErrorNum + 1;
                         }
                     }
+
+                    /* Check AHPS datums */
+                    var flag = 0;
+                    if((usgsDatumName == 'NGVD29') && (AHPSngvd29.length > 0)){
+                        if(usgsDatum != parseFloat(AHPSngvd29)){
+                            $(this).find('td.AHPSngvd29').addClass('warning');
+                            $(this).find('td.USGS_datum').addClass('warningOut');
+                            flag = flag +1;
+                        }
+                    }
+                    if((NRLDBdatumName == 'NGVD29') && (AHPSngvd29.length > 0)){
+                        if(NRLDBdatum != parseFloat(AHPSngvd29)){
+                            $(this).find('td.AHPSngvd29').addClass('warning');
+                            $(this).find('td.NRLDB_datum').addClass('warningOut');
+                            flag = flag +1;
+                        }
+                    }
+                    if((usgsDatumName == 'NAVD88') && (AHPSnavd88.length > 0)){
+                        if(usgsDatum != parseFloat(AHPSnavd88)){
+                            $(this).find('td.AHPSnavd88').addClass('warning');
+                            $(this).find('td.USGS_datum').addClass('warningOut');
+                            flag = flag +1;
+                        }
+                    }
+                    if((NRLDBdatumName == 'NAVD88') && (AHPSnavd88.length > 0)){
+                        if(NRLDBdatum != parseFloat(AHPSnavd88)){
+                            $(this).find('td.AHPSnavd88').addClass('warning');
+                            $(this).find('td.NRLDB_datum').addClass('warningOut');
+                            flag = flag +1;
+                        }
+                    }
+                    if(flag > 0) ahpsErrorNum = ahpsErrorNum+1;
                 });
+                $('#nrldbErrorNum').text(nrldbErrorNum);
+                $('#ahpsErrorNum').text(ahpsErrorNum);
              }
 
 
             function checkDistance(){
                 var numWrong = 0;
-                $('#myTable tr td.NWS_USGS_Distance').each(function() {
+                $('#myTable tr:visible td.NWS_USGS_Distance').each(function() {
                     if ($(this).text() > $('#distance').val()) {
                         $(this).addClass('error');
                         numWrong = numWrong + 1;
@@ -120,6 +163,8 @@
                         this.style.display = 'none';
                     }
                 });
+                checkDatum();
+                checkDistance();
             }
 
 
@@ -336,15 +381,25 @@
             td.error {
                 background-color: #e6bf99;
             }
+            td.errorOut {
+                border: 3px solid #e6bf99;
+            }
+
             td.warning {
-                background-color: #F5F5F5;
+                background-color: #ff9933;
+            }
+            td.warningOut {
+                border: 3px solid #ff9933;
             }
         </style>
     <a href="https://docs.google.com/a/noaa.gov/document/d/1iqR8rKaPrMe1phQTM1BoLeBevaehcXmANnOQiX6xHSM/edit?usp=sharing">Column Definitions and Meta Check Description</a><br>
-    Highlight sites that are further apart than: <input type='text' id='distance' value='0.1' size = '5' onChange='checkDistance();'>miles (<span id='distNum'></span>)<br>
+    Highlight sites that are further apart than: <input type='text' id='distance' value='0.1' size = '5' onChange='checkDistance();'>miles<br>
     Select WFO/RFC Filter:  <input type='text' id='filterVal' value='' size = '5' onChange='filter(this.value);'><br>
     <input id = 'btnSubmit' type='submit' value='Only Show Errors' onclick='showErrors()'/>
     <input id = 'btnSubmit' type='submit' value='Show All' onclick="filter($('#filterVal').val());"/><br>
-    <i>AHPS_datum is based on the 'zerodatum' listed in the XML file and shown in the bottom left corner of the graph</i>
+    Number of Locations Errors: <span id='distNum'></span><br>
+    Number of NRLDB Datum Errors: <span id='nrldbErrorNum'></span><br>
+    Number of AHPS Datum Errors: <span id='ahpsErrorNum'></span><br>
+
     <div id = 'tableDiv'><H4>LOADING TABLE......</HR></div>
 </html>
