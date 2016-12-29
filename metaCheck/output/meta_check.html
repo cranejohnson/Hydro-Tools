@@ -32,8 +32,9 @@
                             cellData = "<a href = 'http://water.weather.gov/ahps2/hydrograph.php?gage="+cellData+"' target='_blank'>"+cellData+"</a>";
                         }
                         if(header[j] == 'USGS_accuracy'){
-                            cellData = "&#177;"+cellData+" ft";                       }
-                        row.append($('<td class="'+header[j]+'">'+cellData+'</td>'));
+                            cellData = "&#177;"+cellData+" ft";
+                        }
+                        row.append($('<td class="'+header[j]+'"><div>'+cellData+'<div></td>'));
                     });
                     tbody.append(row);
                 });
@@ -54,13 +55,13 @@
                     var AHPSnavd88 = $(this).find('td.AHPSnavd88').text();
                     var AHPSngvd29 = $(this).find('td.AHPSngvd29').text();
 
-                    NRLDBdatumName = NRLDBdatumName.replace(/\s+|19|of|OF|USGS/g, '');
+                    NRLDBdatumName = NRLDBdatumName.replace(/\s+|19|of|OF|USGS|-/g, '');
                     AHPSnavd88 = AHPSnavd88.replace(/\s+|ft|NULL/g, '');
                     AHPSngvd29 = AHPSngvd29.replace(/\s+|ft|NULL/g, '');
 
                     if((parseFloat(hadsUSGS)>0) && (ahpsUSGS != hadsUSGS)){
-                        $(this).find('td.AHPS_USGS_ID').addClass('error');
-                        $(this).find('td.HADS_USGS_ID').addClass('error');
+                        $(this).find('td.AHPS_USGS_ID').addClass('warningOut');
+                        $(this).find('td.HADS_USGS_ID').addClass('warning');
                     }
 
                     /* Check the USGS and NRLDB datums */
@@ -260,7 +261,7 @@
             .tablesorter-default td {
                 background-color: #fff;
                 border-bottom: #ccc 1px solid;
-                padding: 4px;
+                padding: 2px;
                 vertical-align: top;
             }
 
@@ -381,7 +382,7 @@
             td.error {
                 background-color: #e6bf99;
             }
-            td.errorOut {
+            td.errorOut > * {
                 border: 3px solid #e6bf99;
             }
 
@@ -390,16 +391,17 @@
             }
             td.warningOut {
                 border: 3px solid #ff9933;
+                border-spacing: 3px;
             }
         </style>
-    <a href="https://docs.google.com/a/noaa.gov/document/d/1iqR8rKaPrMe1phQTM1BoLeBevaehcXmANnOQiX6xHSM/edit?usp=sharing">Column Definitions and Meta Check Description</a><br>
+    <a href="https://docs.google.com/a/noaa.gov/document/d/1CAcmYHifhsCXNVt6gT3DJLSWY90Dtom9tp23kf6ZVYs/edit?usp=sharing">Column Definitions and Meta Check Description</a><br>
     Highlight sites that are further apart than: <input type='text' id='distance' value='0.1' size = '5' onChange='checkDistance();'>miles<br>
     Select WFO/RFC Filter:  <input type='text' id='filterVal' value='' size = '5' onChange='filter(this.value);'><br>
     <input id = 'btnSubmit' type='submit' value='Only Show Errors' onclick='showErrors()'/>
     <input id = 'btnSubmit' type='submit' value='Show All' onclick="filter($('#filterVal').val());"/><br>
-    Number of Locations Errors: <span id='distNum'></span><br>
-    Number of NRLDB Datum Errors: <span id='nrldbErrorNum'></span><br>
-    Number of AHPS Datum Errors: <span id='ahpsErrorNum'></span><br>
+    Number of possible locations Errors: <span id='distNum'></span><br>
+    Number of possible NRLDB Datum Errors: <span id='nrldbErrorNum'></span><br>
+    Number of possible AHPS datum Errors: <span id='ahpsErrorNum'></span><br>
 
     <div id = 'tableDiv'><H4>LOADING TABLE......</HR></div>
 </html>
