@@ -9,7 +9,6 @@
  * @version 0.1
  */
 
-
 /* Configuration information */
 require_once('../config.inc.php');
 define('DEFAULT_CACHE_AGE',86400);       /* Define the cache age for downloaded files */
@@ -26,7 +25,7 @@ require_once(RESOURCES_DIRECTORY."web_functions.php");
  * Update php settings
  */
 ini_set('memory_limit', '512M');
-set_time_limit(300);
+set_time_limit(900);
 
 
 
