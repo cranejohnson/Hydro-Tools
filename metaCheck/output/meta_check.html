@@ -71,14 +71,14 @@
                             $(this).find('td.USGS_datum').addClass('errorOut');
                             nrldbErrorNum = nrldbErrorNum + 1;
                             if((NRLDBdatumName != usgsDatumName)  && (NRLDBdatumName.length > 0)){
-                                $(this).find('td.NRLDB_datumName').addClass('error');
-                                $(this).find('td.USGS_datumName').addClass('errorOut');
+                                $(this).find('td.NRLDB_datumName').addClass('datumErr');
+                                $(this).find('td.USGS_datumName').addClass('datumErrOut');
                              }
                         }
                     }else{
                         if((NRLDBdatumName != usgsDatumName) && (NRLDBdatum.length>0) && (usgsDatum.length >0) && (NRLDBdatumName.length > 0)){
-                            $(this).find('td.NRLDB_datumName').addClass('error');
-                            $(this).find('td.USGS_datumName').addClass('errorOut');
+                            $(this).find('td.NRLDB_datumName').addClass('datumErr');
+                            $(this).find('td.USGS_datumName').addClass('datumErrOut');
                             nrldbErrorNum = nrldbErrorNum + 1;
                         }
                     }
@@ -86,7 +86,7 @@
                     /* Check AHPS datums */
                     var flag = 0;
                     if((usgsDatumName == 'NGVD29') && (AHPSngvd29.length > 0)){
-                        if(usgsDatum != parseFloat(AHPSngvd29)){
+                        if((usgsDatum != parseFloat(AHPSngvd29))&&(usgsDatum.length)){
                             $(this).find('td.AHPSngvd29').addClass('warning');
                             $(this).find('td.USGS_datum').addClass('warningOut');
                             flag = flag +1;
@@ -100,7 +100,7 @@
                         }
                     }
                     if((usgsDatumName == 'NAVD88') && (AHPSnavd88.length > 0)){
-                        if(usgsDatum != parseFloat(AHPSnavd88)){
+                        if((usgsDatum != parseFloat(AHPSnavd88))&&(usgsDatum.length)){
                             $(this).find('td.AHPSnavd88').addClass('warning');
                             $(this).find('td.USGS_datum').addClass('warningOut');
                             flag = flag +1;
@@ -124,7 +124,7 @@
                 var numWrong = 0;
                 $('#myTable tr:visible td.NWS_USGS_Distance').each(function() {
                     if ($(this).text() > $('#distance').val()) {
-                        $(this).addClass('error');
+                        $(this).addClass('locationErr');
                         numWrong = numWrong + 1;
                    }
                     else{
@@ -379,6 +379,9 @@
                 cursor: pointer;
                 background-color: #e6bf99;
             }
+            td.locationErr {
+                background-color:#B8B5B5;
+            }
             td.error {
                 background-color: #e6bf99;
             }
@@ -386,6 +389,12 @@
                 border: 3px solid #e6bf99;
             }
 
+            td.datumErr{
+                background-color: #20B2AA;
+            }
+            td.datumErrOut > * {
+                border: 3px solid #20B2AA;
+            }
             td.warning {
                 background-color: #ff9933;
             }

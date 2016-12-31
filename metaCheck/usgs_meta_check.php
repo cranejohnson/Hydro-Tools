@@ -315,8 +315,13 @@ foreach($ahpsReport['sites'] as $site){
             if($usgs = getUSGS_siteInfo($url)){
                 $array['USGS_lat'] = floatval($usgs[$nwsUSGS]['dec_lat_va']);
                 $array['USGS_lon'] = floatval($usgs[$nwsUSGS]['dec_long_va']);
-                $array['USGS_datum'] = floatval($usgs[$nwsUSGS]['alt_va']);
-                $array['USGS_datumName'] = $usgs[$nwsUSGS]['alt_datum_cd'];
+                if(strlen($usgsInfo[$nwsUSGS]['alt_va'])>0){
+                    $array['USGS_datum'] = floatval($usgsInfo[$nwsUSGS]['alt_va']);
+                }
+                else{
+                    $array['USGS_datum'] = '';
+                }
+                $array['USGS_datumName'] = trim($usgs[$nwsUSGS]['alt_datum_cd']);
                 #$array['USGS_accuracy'] = floatval($usgs[$nwsUSGS]['alt_acy_va']);
             }
         }
