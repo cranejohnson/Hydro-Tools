@@ -365,6 +365,8 @@ foreach($ahpsReport['sites'] as $site){
 
 
 fclose($output);
+file_put_contents('output/All_meta_check.state',"Last Updated: ".date("F j, Y, g:i a"));
+
 
 $logger->log("STOP",PEAR_LOG_INFO);
-?>​
+?>

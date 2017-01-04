@@ -182,6 +182,13 @@
                         checkDatum();
                     }
                 });
+                 $.ajax({
+                    type: "GET",
+                    url: "All_meta_check.state",
+                    success: function (data) {
+                         $("#lastRun").text(data);
+		    }
+                });
 
                 //$('#myTable').fadeIn(2000);
 
@@ -403,6 +410,7 @@
                 border-spacing: 3px;
             }
         </style>
+    <p id='lastRun'></p>
     <a href="https://docs.google.com/a/noaa.gov/document/d/1CAcmYHifhsCXNVt6gT3DJLSWY90Dtom9tp23kf6ZVYs/edit?usp=sharing">Column Definitions and Meta Check Description</a><br>
     Highlight sites that are further apart than: <input type='text' id='distance' value='0.1' size = '5' onChange='checkDistance();'>miles<br>
     Select WFO/RFC Filter:  <input type='text' id='filterVal' value='' size = '5' onChange='filter(this.value);'><br>
