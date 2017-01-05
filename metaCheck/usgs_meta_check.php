@@ -10,6 +10,8 @@
  */
 
 /* Configuration information */
+chdir(dirname(__FILE__));
+
 require_once('../config.inc.php');
 define('DEFAULT_CACHE_AGE',86400);       /* Define the cache age for downloaded files */
 define('OUTPUT_FOLDER','output/');
@@ -199,7 +201,7 @@ if((strlen($filter['value']) == 0) || (strlen($filter['column']) == 0)){
  *
  * @var string $id
  */
-$id = OUTPUT_FOLDER.$filter['column']."_".$filter['value']."_meta_check.csv";
+$id = OUTPUT_FOLDER.$filter['column']."_".$filter['value']."_meta_check.temp";
 
 
 /**
@@ -213,7 +215,7 @@ $logger->log("Working on: {$filter['column']} = {$filter['value']} ",PEAR_LOG_IN
 
 if(strtoupper($value) == 'ALL'){
     $filter = null;
-    $id = OUTPUT_FOLDER."All_meta_check.csv";
+    $id = OUTPUT_FOLDER."All_meta_check.temp";
 }
 
 /**
@@ -363,10 +365,12 @@ foreach($ahpsReport['sites'] as $site){
 
 
 
-
+//Close the temporary file
 fclose($output);
-file_put_contents('output/All_meta_check.state',"Last Updated: ".date("F j, Y, g:i a"));
-
+//rename to final file name
+if(rename($output,str_replace("temp","csv",$output))){
+    file_put_contents('output/All_meta_check.state',"Last Updated: ".date("F j, Y, H:i")." UTC");
+}
 
 $logger->log("STOP",PEAR_LOG_INFO);
 ?>

@@ -141,6 +141,12 @@
                         if($(this).hasClass( 'error' )){
                             showRow = true;
                         }
+                        if($(this).hasClass( 'warning' )){
+                            showRow = true;
+                        }
+                        if($(this).hasClass( 'datumErr' )){
+                            showRow = true;
+                        }
                     });
                     if(!showRow){
                          this.style.display = 'none';
@@ -411,14 +417,14 @@
             }
         </style>
     <p id='lastRun'></p>
-    <a href="https://docs.google.com/a/noaa.gov/document/d/1CAcmYHifhsCXNVt6gT3DJLSWY90Dtom9tp23kf6ZVYs/edit?usp=sharing">Column Definitions and Meta Check Description</a><br>
+    <a href="https://docs.google.com/a/noaa.gov/document/d/1CAcmYHifhsCXNVt6gT3DJLSWY90Dtom9tp23kf6ZVYs/edit?usp=sharing">Column Definitions and Description</a><br>
     Highlight sites that are further apart than: <input type='text' id='distance' value='0.1' size = '5' onChange='checkDistance();'>miles<br>
     Select WFO/RFC Filter:  <input type='text' id='filterVal' value='' size = '5' onChange='filter(this.value);'><br>
     <input id = 'btnSubmit' type='submit' value='Only Show Errors' onclick='showErrors()'/>
     <input id = 'btnSubmit' type='submit' value='Show All' onclick="filter($('#filterVal').val());"/><br>
-    Number of possible locations Errors: <span id='distNum'></span><br>
-    Number of possible NRLDB Datum Errors: <span id='nrldbErrorNum'></span><br>
-    Number of possible AHPS datum Errors: <span id='ahpsErrorNum'></span><br>
+    Number of possible location errors: <span id='distNum'></span><br>
+    Number of possible NRLDB Datum errors: <span id='nrldbErrorNum'></span><br>
+    Number of possible AHPS datum errors: <span id='ahpsErrorNum'></span><br>
 
     <div id = 'tableDiv'><H4>LOADING TABLE......</HR></div>
 </html>
