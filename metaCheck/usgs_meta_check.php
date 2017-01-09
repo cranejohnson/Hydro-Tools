@@ -368,7 +368,7 @@ foreach($ahpsReport['sites'] as $site){
 //Close the temporary file
 fclose($output);
 //rename to final file name
-if(rename($output,str_replace("temp","csv",$output))){
+if(rename($id,str_replace("temp","csv",$id))){
     file_put_contents('output/All_meta_check.state',"Last Updated: ".date("F j, Y, H:i")." UTC");
 }
 
