@@ -5,7 +5,7 @@ tmp/*
 *.json
 TO_LDAD/*
 push2Ldad.php
-getUSGSQ.state
+*.state
 metaCheck/output/*.csv
 move2nids.sh
 grabbers/getNWIS/*
