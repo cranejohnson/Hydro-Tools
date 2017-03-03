@@ -25,14 +25,44 @@ require_once(PROJECT_ROOT.'/resources/Pear/Cache/Lite.php');
 
 
 /**
- * Setup the Pear Logging Utility
+ * Setup PEAR logging utility
  */
-$conf = array('dsn' => "mysqli://$User:$Passwd@$Host/aprfc",
-        'identLimit' => 255);
-$logger = Log::singleton('sql', 'log_table', __file__, $conf);
+
+//Console gets more information, file and sql only get info and above errors
+$consoleMask = Log::MAX(PEAR_LOG_DEBUG);
+$fileMask = Log::MAX(PEAR_LOG_INFO);
+$sqlMask = Log::MAX(PEAR_LOG_INFO);
+
+$sessionId = 'ID:'.time();
+if(LOG_TYPE == 'DB'){
+    $conf = array('dsn' => "mysqli://".DB_USER.":".DB_PASSWORD."@".DB_HOST."/".DB_DATABASE,
+            'identLimit' => 255);
+
+    $sql = Log::factory('sql', 'log_table', __file__, $conf);
+    $sql->setMask($sqlMask);
+    $console = Log::factory('console','',$sessionId);
+    $console->setMask($consoleMask);
+    $logger = Log::singleton('composite');
+    $logger->addChild($console);
+    $logger->addChild($sql);
+}
+if(LOG_TYPE == 'FILE'){
+    $script = basename(__FILE__, '.php');
+    $file = Log::factory('file',LOG_DIRECTORY.$script.'.log',$sessionId);
+    $file->setMask($fileMask);
+    $console = Log::factory('console','',$sessionId);
+    $console->setMask($consoleMask);
+    $logger = Log::singleton('composite');
+    $logger->addChild($console);
+    $logger->addChild($file);
+}
+if(LOG_TYPE == 'NULL'){
+    $logger = Log::singleton('null');
+}
 
 
 $logger->log("START",PEAR_LOG_INFO);
+
 
 
 define('URL_BASE','http://www.nws.noaa.gov/mdl/etsurge/index.php?page=stn&region=ga&datum=mllw&list=&map=0-48&type=text&stn=');
