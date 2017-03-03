@@ -19,7 +19,7 @@ chdir(dirname(__FILE__));
 require_once('../config.inc.php');
 
 /* Directory for output graphs */
-define("IMAGE_OUTPUT","/hd1apps/data/intranet/html/tools/gagecompare/ahps_usgs_graphs/");
+define("IMAGE_OUTPUT","/var/www/html/tools/gagecompare/ahps_usgs_graphs/");
 #define("IMAGE_OUTPUT","ahps_usgs_graphs/");
 
 //Pear log package
@@ -153,7 +153,7 @@ $usgsPeriod = 'P7D';
 $logger->log("START",PEAR_LOG_INFO);
 
 
-if(copy("show_all.php","/hd1apps/data/intranet/html/tools/gagecompare/show_all.php")){
+if(copy("show_all.php","/var/www/html/tools/gagecompare/show_all.php")){
     $logger->log("Copied 'showall.php' to output location.",PEAR_LOG_INFO);
 }else{
     $logger->log("Failed to copy 'showall.php' to output location.",PEAR_LOG_INFO);
