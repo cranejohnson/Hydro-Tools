@@ -517,6 +517,8 @@ function read_file_filter($filename,$delim = ',',$filter = null){
                 $fileContents[] = trim($line);
                 continue;
             }
+
+            if(!array_key_exists($filterCol,$data)) continue; 
             if(strtoupper($data[$filterCol]) == strtoupper($filter['value'])){
                 $fileContents[] = trim($line);
                 continue;
