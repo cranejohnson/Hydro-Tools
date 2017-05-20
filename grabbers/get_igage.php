@@ -171,7 +171,7 @@ function decode_igage10adjust($email_date,$data,$verbose,$zerostage){
     $sitedata['producttime'] = gmdate('Y-m-d H:i',$rdate);
 
     #Kludge fix to correct when the time gets off
-        if(abs($rdate-(strtotime($email_date)))> (3600*1)){
+    if(abs($rdate-(strtotime($email_date)))> (3600*1)){
         $sitedata['producttime'] = $email_date;
         echo "Update product time\n";
     }
@@ -329,6 +329,75 @@ function decode_csi($email_date,$data,$verbose,$zerostage){
 
     ###Calculate stage
     if($zerostage)$sitedata['calcstage']= sprintf("%0.2f",$zerostage - abs($sitedata['distance'])/12);
+
+    return $sitedata;
+}
+
+function decode_susitna($email_date,$data,$verbose,$zerostage){
+
+
+    # parse 14 byte structure - big endian order
+    # bytes     description
+    # 1,2       Hours since the start of the current calendar
+    #           year = value
+    # 3,4       Battery Voltage = value/10 - 200
+    # 5,6       AirTemp (hourly average) = value/10 - 200
+    # 7,8       RH (hourly average) = value/10 - 200
+    # 9,10      Rain  (PC) = value/10 - 200
+    # 11,12     Baro = value/10 - 200
+    # 13,14     Windspeed (hourly average) = value/10 - 200
+    # 15,16     Wind Dir (hourly vector average) = value/10 - 200
+    # 17,18     Wind Gust (hourly max) = value/10 - 200
+    # 19,20      TX tries = value/10 - 200
+
+    $sitedata = array();
+    $datalength = strlen($data);
+    $email_year = gmdate('Y',(strtotime($email_date)));
+    $base_time = strtotime("01Jan$email_year 00:00")-24*3600;
+
+
+    if($verbose) echo "Length: $datalength<br>";
+
+    $decimal = unpack('n',substr($data,0,2));
+    $rec_time = $base_time+$decimal[1]*3600+7*3600;
+    $sitedata['producttime'] = date('Y-m-d H:i',$rec_time);
+
+
+    ###Unpack Battery Voltage
+    $array = unpack('n',substr($data,2,2));
+    $sitedata['shefValues']['VBIRZZ'] = ($array[1]/10)-200;
+
+    ###Unpack Air Temperature
+    $array = unpack('n',substr($data,4,2));
+    $sitedata['shefValues']['TAHRZZ'] = (($array[1]/10)-200)*(9/5)+32;
+
+    ###Unpack RH
+    $array = unpack('n',substr($data,6,2));
+    $sitedata['shefValues']['XRIRZZ'] = (($array[1]/10)-200);
+
+    ###Unpack Rain
+    $array = unpack('n',substr($data,8,2));
+    $sitedata['shefValues']['PCIRZZ'] = round((($array[1]/10)-200)/25.4,2);
+
+    ###Unpack Barometer
+    $array = unpack('n',substr($data,10,2));
+    $sitedata['shefValues']['PAIRZZ'] = ($array[1]/10)-200;
+
+    ###Unpack Wind speed
+    $array = unpack('n',substr($data,12,2));
+    $sitedata['shefValues']['USHRZZ'] = (($array[1]/10)-200)*2.24;
+
+    ###Unpack Wind Dir
+    $array = unpack('n',substr($data,14,2));
+    $sitedata['shefValues']['UDHRZZ'] = ($array[1]/10)-200;
+    
+    ###Unpack Wind Gust
+    $array = unpack('n',substr($data,16,2));
+    $sitedata['shefValues']['UPIRZZ'] = (($array[1]/10)-200)*2.24;
+
+    ###Unpack Comm Attempts Voltage
+    $array = unpack('n',substr($data,18,2));
+    $sitedata['tries'] = ($array[1]/10)-200;
 
     return $sitedata;
 }
@@ -544,7 +613,7 @@ if($emails){
             else{
                 $row = $result->fetch_array();
                 $sitedata['lid']=$row['lid'];
-                                $sitedata['pe'] = $row['peCode'];
+                $sitedata['pe'] = $row['peCode'];
                 $sitedata['ts'] = $row['typeSource'];
                 $sitedata['DBTABLE']=$row['datatable'];
                 $zerostage = $row['zerostage'];
