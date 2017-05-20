@@ -75,7 +75,7 @@ function decode_igage10($email_date,$data,$verbose,$zerostage){
 
     $sitedata = array();
     $datalength = strlen($data);
-    if($verbose) echo "Length: $datalength<br>";
+    if($verbose) echo "Length: $datalength\n";
 
     ####Unpack and decode the data record time
     #  Date/Time is formated in a compact 3 byte packet as follows
@@ -145,7 +145,7 @@ function decode_igage10adjust($email_date,$data,$verbose,$zerostage){
     $offset = 0.021;
     $sitedata = array();
     $datalength = strlen($data);
-    if($verbose) echo "Length: $datalength<br>";
+    if($verbose) echo "Length: $datalength\n";
 
     ####Unpack and decode the data record time
     #  Date/Time is formated in a compact 3 byte packet as follows
@@ -219,7 +219,7 @@ function decode_bigdelta($email_date,$data,$verbose,$zerostage){
 
     $sitedata = array();
     $datalength = strlen($data);
-    if($verbose) echo "Length: $datalength<br>";
+    if($verbose) echo "Length: $datalength\n";
 
     ####Unpack and decode the data record time
     #  Date/Time is formated in a compact 3 byte packet as follows
@@ -300,7 +300,7 @@ function decode_csi($email_date,$data,$verbose,$zerostage){
     $base_time = strtotime("01Jan$email_year 00:00")-24*3600;
 
 
-    if($verbose) echo "Length: $datalength<br>";
+    if($verbose) echo "Length: $datalength\n";
 
     $decimal = unpack('n',substr($data,0,2));
     $rec_time = $base_time+$decimal[1]*3600+7*3600;
@@ -356,10 +356,10 @@ function decode_susitna($email_date,$data,$verbose,$zerostage){
     $base_time = strtotime("01Jan$email_year 00:00")-24*3600;
 
 
-    if($verbose) echo "Length: $datalength<br>";
+    if($verbose) echo "Length: $datalength\n";
 
     $decimal = unpack('n',substr($data,0,2));
-    $rec_time = $base_time+$decimal[1]*3600+7*3600;
+    $rec_time = $base_time+$decimal[1]*3600+9*3600;
     $sitedata['producttime'] = date('Y-m-d H:i',$rec_time);
 
 
@@ -421,7 +421,7 @@ function decode_cordova($email_date,$data,$verbose,$zerostage){
     $base_time = strtotime("01Jan$email_year 00:00")-24*3600;
 
 
-    if($verbose) echo "Length: $datalength<br>";
+    if($verbose) echo "Length: $datalength\n";
 
     $decimal = unpack('n',substr($data,0,2));
     $rec_time = $base_time+$decimal[1]*3600;
@@ -458,13 +458,14 @@ function decode_cordova($email_date,$data,$verbose,$zerostage){
 }
     
     
-function dbinsert($sitedata,$mysqli,$logger){
+/* function dbinsert($sitedata,$mysqli,$logger){
 
     $names = '';
     $values = '';
 
 
     foreach($sitedata as $name => $value){
+        #echo "$name : $value\n";
         if($name == 'DBTABLE') continue;
         $names .= $name.",";
         $values .= "'".$value."',";
@@ -472,13 +473,15 @@ function dbinsert($sitedata,$mysqli,$logger){
     $names = rtrim($names, ',');
     $values = rtrim($values,',');
     $insertquery = "INSERT INTO {$sitedata['DBTABLE']} ($names) VALUES ($values)";
+    echo $insertquery;
     $result = $mysqli->query($insertquery);
+    echo $result;
     if(($mysqli->error )&($mysqli->errno != 1062)){
         $logger->log("dbinsert error:".$mysqli->error,PEAR_LOG_ERR);
         echo "Failed to load db....".$mysqli->error,PEAR_LOG_ERR;
     }
     return $result;
-}
+} */
 
 
 function csi_to_shef($sitedata,$overWrite = false){
@@ -619,10 +622,10 @@ if($emails){
                 $zerostage = $row['zerostage'];
 
                 $decoder = 'decode_'.$row['decoder'];
-                if($verbose) echo "Siteid: {$sitedata['lid']}<br>";
+                if($verbose) echo "Siteid: {$sitedata['lid']}\n";
                 $sbddata = $decoder($sitedata['postingtime'],$data,$verbose,$zerostage);
                 $sitedata = array_merge($sitedata,$sbddata);
-                dbinsert($sitedata,$mysqli,$logger);
+                //dbinsert($sitedata,$mysqli,$logger);
                 if($row['ingest']){
                     if(isset($sitedata['shefValues'])){
                         $shefFile .=  csi_to_shef($sitedata);
