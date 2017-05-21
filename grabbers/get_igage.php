@@ -397,7 +397,7 @@ function decode_susitna($email_date,$data,$verbose,$zerostage){
 
     ###Unpack Comm Attempts Voltage
     $array = unpack('n',substr($data,18,2));
-    $sitedata['tries'] = ($array[1]/10)-200;
+    $sitedata['shefValues']['YAIRZZ'] = ($array[1]/10)-200;
 
     return $sitedata;
 }
@@ -447,10 +447,10 @@ function decode_cordova($email_date,$data,$verbose,$zerostage){
     ###Unpack RH
     $array = unpack('n',substr($data,10,2));
     $sitedata['shefValues']['XRIRZZ'] = ($array[1]/10)-200;
-    
-     ###Unpack Comm Attempts Voltage
+
+    ###Unpack Comm Attempts
     $array = unpack('n',substr($data,12,2));
-    $sitedata['tries'] = ($array[1]/10)-200;
+    $sitedata['shefValues']['YAIRZZ'] = ($array[1]/10)-200;    
 
     
     
