@@ -44,7 +44,7 @@ define("URL_AHPSREPORT","http://water.weather.gov/monitor/ahpsreport.php");
 //AHPS notes report
 define("URL_AHPSNOTES","http://water.weather.gov/monitor/hydronote_report.php");
 //HADS USGS-NWSLID crosswalk table
-define("URL_HADSIDLOOKUP","http://www.nws.noaa.gov/oh/hads/USGS/");
+define("URL_HADSIDLOOKUP","https://hads.ncep.noaa.gov/USGS/");
 //Base URL for usgs instant value web service
 define("URL_USGSINSTANTVAL","http://waterservices.usgs.gov/nwis/iv/");
 //Base URL for AHPS xml  data
