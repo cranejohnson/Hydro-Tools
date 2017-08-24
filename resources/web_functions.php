@@ -270,7 +270,7 @@ function getUSGS($period,$location){
 
     $url = URL_USGSINSTANTVAL;
     $url .= "?format=waterml,1.1";
-    $url .= "&period=$period&parameterCd=00060,00065";
+    $url .= "&period=$period&parameterCd=00060,00065,00062";
 
 
 
@@ -310,6 +310,7 @@ function getUSGS($period,$location){
         $varcode = $site_data->variable->variableCode;
         if($varcode == '00060') $shef = 'QR';
         if($varcode == '00065') $shef = 'HG';
+        if($varcode == '00062') $shef = 'HG';
         $siteid = intval($site_data->sourceInfo->siteCode);
         $noDataVal = floatval($site_data->variable->noDataValue);
         $usgs[$siteid]['name'] = (string)$site_data->sourceInfo->siteName;
@@ -473,7 +474,10 @@ function getAhpsData($siteid){
             }
             $discharge = floatval($value->secondary)*$mult;
 
+            $PEcode = substr($value->pedts,0,2);
+
             if(isset($value->secondary) && ($discharge != -999000)) $ahps[$siteid]['data'][strtotime($value->valid)]['QR']['val'] = $discharge;
+            //Always assign the primary data as HG....this covers reservior pool data as well
             $ahps[$siteid]['data'][strtotime($value->valid)]['HG']['val'] = floatval($value->primary);
         }
     }
@@ -518,7 +522,7 @@ function read_file_filter($filename,$delim = ',',$filter = null){
                 continue;
             }
 
-            if(!array_key_exists($filterCol,$data)) continue; 
+            if(!array_key_exists($filterCol,$data)) continue;
             if(strtoupper($data[$filterCol]) == strtoupper($filter['value'])){
                 $fileContents[] = trim($line);
                 continue;
