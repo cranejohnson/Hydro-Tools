@@ -19,8 +19,8 @@ chdir(dirname(__FILE__));
 require_once('../config.inc.php');
 
 /* Directory for output graphs */
-define("IMAGE_OUTPUT","/var/www/html/tools/gagecompare/ahps_usgs_graphs/");
-#define("IMAGE_OUTPUT","ahps_usgs_graphs/");
+#define("IMAGE_OUTPUT","/var/www/html/tools/gagecompare/ahps_usgs_graphs/");
+define("IMAGE_OUTPUT","ahps_usgs_graphs/");
 
 //Pear log package
 require_once (PROJECT_ROOT.'/resources/Pear/Log.php');
@@ -123,11 +123,13 @@ function XYarrays($dataObj,$param,$qualifier = NULL){
 function findDiff($ahpsSite,$usgsSite,$param){
     $diff = array();
     foreach($ahpsSite as $date => $data){
-        if(isset($data[$param])& isset($usgsSite[$date][$param])){
+        //Check if both USGS and AHPS data exists for the giving time
+        if(isset($data[$param]['val']) && isset($usgsSite[$date][$param]['val'])){
             $nws = floatval($data[$param]['val']);
             $usgs = floatval($usgsSite[$date][$param]['val']);
-            if($nws > 0) $diff[$date]['diff']['val'] = round($nws - $usgs,2);
-            if($nws > 0 && $usgs > 0){
+            //Make sure the data is not set as missing typically -9999 or -99999
+            if($nws > -9000) $diff[$date]['diff']['val'] = round($nws - $usgs,2);
+            if($nws > -9000 && $usgs > -9000){
                  $diff[$date]['diff']['percent'] = round((($nws - $usgs)/$usgs)*100,1);
              }
              else{
@@ -153,7 +155,7 @@ $usgsPeriod = 'P7D';
 $logger->log("START",PEAR_LOG_INFO);
 
 
-if(copy("show_all.php","/var/www/html/tools/gagecompare/show_all.php")){
+if(copy("show_all.php",IMAGE_OUTPUT."show_all.php")){
     $logger->log("Copied 'showall.php' to output location.",PEAR_LOG_INFO);
 }else{
     $logger->log("Failed to copy 'showall.php' to output location.",PEAR_LOG_INFO);
@@ -224,7 +226,7 @@ foreach($siteInfo['sites'] as $nws => $site){
     }
 
     //Ignore certain sites....typically recently decommisioned usgs sites
-    if(in_array($nws,$ignoreSites)) continue;	
+    if(in_array($nws,$ignoreSites)) continue;
 
 
     $logger->log("Working on: ".$nws." - ".$site['usgs'],PEAR_LOG_DEBUG);
@@ -288,8 +290,8 @@ foreach($siteInfo['sites'] as $nws => $site){
      //Get the most recent values for both USGS and AHPS
     $lastUSGS =array();
     $lastAHPS =array();
-    $lastAHPSDate;
-    $lastUSGSDate;
+    $lastAHPSDate = 0;
+    $lastUSGSDate = 0;
 
 
     if(isset($usgs[$index]['data'])){
@@ -312,8 +314,8 @@ foreach($siteInfo['sites'] as $nws => $site){
     $AHPS_HG = False;
     $AHPS_QR = False;
 
-    #If last ob is less than 24 hours old check 
-    if((time()-$lastUSGSDate)<86400){ 
+    #If last ob is less than 24 hours old check
+    if((time()-$lastUSGSDate)<86400){
         if(array_key_exists('HG',$lastUSGS) && ($lastUSGS['HG']['q'] == "P")){
             $USGS_HG = True;
         }
@@ -322,8 +324,8 @@ foreach($siteInfo['sites'] as $nws => $site){
         }
     }
 
-    #If last ob is less than 24 hours old check 
-    if((time()-$lastAHPSDate)<86400){ 
+    #If last ob is less than 24 hours old check
+    if((time()-$lastAHPSDate)<86400){
         if(array_key_exists('QR',$lastAHPS)){
             $AHPS_QR = True;
         }
@@ -401,7 +403,7 @@ foreach($siteInfo['sites'] as $nws => $site){
 
    if($USGS_QR && !$AHPS_QR){
         if($ahps[$nws]['inService']){
-            $logger->log("USGS publishing discharge and NWS is NOT in service: ".$nws,PEAR_LOG_ERR);
+            $logger->log("USGS publishing discharge and NWS is NOT: ".$nws,PEAR_LOG_ERR);
             $jsonError['sites'][$nws][] = "USGS publishing discharge and NWS is NOT";
         }else{
             $logger->log("USGS publishing discharge and NWS site is not in service: ".$nws,PEAR_LOG_ERR);
@@ -547,7 +549,7 @@ foreach($siteInfo['sites'] as $nws => $site){
             $graph->ynaxis[0]->title->SetFont(FF_ARIAL,FS_BOLD,12);
             $graph->ynaxis[0]->SetTitlemargin(40);
             $line = new LinePlot($graphData[1],$graphData[0]);
-            $line->SetLegend('HG Diff');
+            $line->SetLegend('Stage Diff');
             $line->SetColor("green");
             $line->SetWeight(3);
             $graph->AddY(0,$line);
