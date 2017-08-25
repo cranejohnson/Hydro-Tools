@@ -586,6 +586,11 @@ if($emails){
             $file = $att->dparameters[0]->value;        # Native file format 100808210135.jpg
             $imei = substr($file,0,15);
         }
+        if(!is_numeric($imei)) {
+             $logger->log("Email subject does not contain IMEI: $file",PEAR_LOG_NOTICE);
+             imap_mail_move($mbox,$msgno,$final_box);
+             continue;
+        }     
         $struct = imap_fetchstructure($mbox,$msgno);
         //$contentParts = count($struct->parts);
         $fileContent = imap_fetchbody($mbox,$msgno,2);
