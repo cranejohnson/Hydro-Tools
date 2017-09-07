@@ -215,72 +215,59 @@ function decode_igage10adjust($email_date,$data,$verbose,$zerostage){
     return $sitedata;
 }
 
-function decode_bigdelta($email_date,$data,$verbose,$zerostage){
 
+
+function decode_laser($email_date,$data,$verbose,$zerostage){
+
+    # parse 14 byte structure - big endian order
+    # bytes     description
+    # 1,2       Hours since the start of the current calendar
+    #           year = value
+    # 3,4       Battery Voltage = value/10 - 200
+    # 5,6       Air Temperature = value/10 - 200
+    # 7,8      Distance Measurement = value/10 - 200
+    # 9,10     Previous Communication Attempts = value/10 - 200
+
+    # NOTE...angle is hardcoded below....need to move this into DB.
+    
     $sitedata = array();
     $datalength = strlen($data);
+    $email_year = gmdate('Y',(strtotime($email_date)));
+    $base_time = strtotime("01Jan$email_year 00:00")-24*3600;
+    
+    
+    $angle = 27.3;
     if($verbose) echo "Length: $datalength\n";
 
-    ####Unpack and decode the data record time
-    #  Date/Time is formated in a compact 3 byte packet as follows
-    #
-    #  Byte 1      7654         month (1..12)
-    #                  3210     year % 10 (0..9)
-    #  Byte 2      765          3 LS bits of hour
-    #                 43210     day (1..31)
-    #  Byte 3      765432       minute (0..59)
-    #                    10     2 MS bits of hour
-    #
+    $decimal = unpack('n',substr($data,0,2));
+    $rec_time = $base_time+$decimal[1]*3600+7*3600;
+    $sitedata['producttime'] = date('Y-m-d H:i',$rec_time);
+    $sitedata['producttime'] = $email_date;
 
-    $timeb1 = unpack('C',substr($data,0,1));
-    $year = ((240 & $timeb1[1]) >> 4) + 2010;
-    $month = (15 & $timeb1[1]);
-    $timeint = unpack('S',substr($data,1,2));
-    $day = ((63488 & $timeint[1]) >>11);
-    $temp1 = ((1792 & $timeint[1]) >> 6);
-    $temp2 = ((192 & $timeint[1]) >> 6);
-    $hour = $temp1 | $temp2;
-    $minute = (63 & $timeint[1]);
-    $rdate = strtotime("$year/$month/$day $hour:$minute");
-    $sitedata['producttime'] = gmdate('Y-m-d H:i',$rdate);
 
-    ####Unpack the number of retries for the last transmission
-        $array =  unpack('C',substr($data,3,1));
-    $sitedata['tries'] = ((240 & $array[1]) >> 4);
+        ###Unpack Battery Voltage
+    $array = unpack('n',substr($data,2,2));
+    $sitedata['battery'] = ($array[1]/10)-200;
 
-    ####Unpack Logger batt
-    $array = unpack('s',substr($data,4,2));
-    $sitedata['battery'] = $array[1]/100;
+        ###Unpack Panel Temperature
+    $array = unpack('n',substr($data,4,2));
+    $sitedata['paneltemp'] = ($array[1]/10)-200;
 
-    ####Unpack Internal Temp
-    $array = unpack('s',substr($data,6,2));
-    $sitedata['paneltemp'] = $array[1]/10;
+        ###Unpack Distance
+    $array = unpack('n',substr($data,6,2));
+    $sitedata['distance'] = ($array[1]/10)-200;
 
-    ####Unpack Corrected Depth
-    $array = unpack('s',substr($data,10,2));
-    $sitedata['distance'] = abs($array[1]/10);
-    if($sitedata['distance'] > 384){
-        $sitedata['distance'] = -9999;
-        $sitedata['calcstage'] = -9999;
-    }
-    elseif($sitedata['distance'] < 24){
-        echo "Bad value\n";
-        $sitedata['distance'] = -9999;
-        $sitedata['calcstage'] = -9999;
-    }
-    else{
-     ###Calculate stage
-     if($zerostage) $sitedata['calcstage']= sprintf("%0.2f",$zerostage - ($sitedata['distance'])/12);
-    }
+        ###Unpack Comm Attempts Voltage
+    $array = unpack('n',substr($data,8,2));
+    $sitedata['tries'] = ($array[1]/10)-200;
+    
+    $delta = (sin(deg2rad($angle))*abs($sitedata['distance']))/12;
 
-    ####Unpack Air Temperature
-    $array = unpack('s',substr($data,12,2));
-    $sitedata['paneltemp'] = $array[1]/10;
+    ###Calculate stage
+    if($zerostage)$sitedata['calcstage']= sprintf("%0.2f",$zerostage - $delta);
 
     return $sitedata;
 }
-
-
 
 function decode_csi($email_date,$data,$verbose,$zerostage){
 
@@ -334,7 +321,7 @@ function decode_csi($email_date,$data,$verbose,$zerostage){
 }
 
 function decode_susitna($email_date,$data,$verbose,$zerostage){
-
+    #Used for DGGS Susitna Sites 
 
     # parse 14 byte structure - big endian order
     # bytes     description
@@ -403,7 +390,8 @@ function decode_susitna($email_date,$data,$verbose,$zerostage){
 }
     
 function decode_cordova($email_date,$data,$verbose,$zerostage){
-
+    #Used for Cordova Power Creek Site
+    
     # parse 14 byte structure - big endian order
     # bytes     description
     # 1,2       Hours since the start of the current calendar (UTC)

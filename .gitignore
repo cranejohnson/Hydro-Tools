@@ -8,4 +8,4 @@ push2Ldad.php
 *.state
 metaCheck/output/*.csv
 move2nids.sh
-grabbers/getNWIS/*
+grabbers/GetNWIS/*
