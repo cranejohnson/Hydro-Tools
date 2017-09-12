@@ -565,7 +565,7 @@ $numnew =  imap_num_recent($mbox);
 $emails = imap_search($mbox,'ALL');
 
 if($emails){
-    //arsort($emails); //JUST DO ARSORT
+    arsort($emails); //JUST DO ARSORT
     foreach($emails as $email_number) {
         $logger->log("Working on email number: $email_number",PEAR_LOG_NOTICE);
         $sitedata = array();
