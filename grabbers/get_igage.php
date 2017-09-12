@@ -103,7 +103,7 @@ function decode_igage10($email_date,$data,$verbose,$zerostage){
     #Kludge fix to correct when the time gets off
         if(abs($rdate-(strtotime($email_date)))> (3600*1)){
         $sitedata['producttime'] = $email_date;
-        echo "Update product time\n";
+        echo "Updated Product Time\n";
     }
 
 
@@ -536,6 +536,8 @@ $imapaddress = "{imap.gmail.com:993/imap/ssl}";
 //Gmail host with folder
 $hostname = $imapaddress . $imapmainbox;
 
+//$final_box = "[Gmail]/Trash";
+
 $final_box = "sbd_done";
 
 $verbose = false;
@@ -561,9 +563,11 @@ $numnew =  imap_num_recent($mbox);
 
 ######Process each message
 $emails = imap_search($mbox,'ALL');
+
 if($emails){
-    arsort($emails); //JUST DO ARSORT
+    //arsort($emails); //JUST DO ARSORT
     foreach($emails as $email_number) {
+        $logger->log("Working on email number: $email_number",PEAR_LOG_NOTICE);
         $sitedata = array();
         $msgno = $email_number;
         $text = "";
@@ -595,9 +599,10 @@ if($emails){
         $sitedata['CEPradius'] = $array[1];
         preg_match("/MOMSN:(.+)\n/",$string,$array);
         $sitedata['momsn'] = $array[1];
-                $sitedata['imei'] = $imei;
+        $sitedata['imei'] = $imei;
         if($verbose) echo "IMEI:$imei\n";
 
+        $logger->log("Working on IMEI: $imei",PEAR_LOG_NOTICE);
         imap_mail_move($mbox,$msgno,$final_box);
 
         if($data){
