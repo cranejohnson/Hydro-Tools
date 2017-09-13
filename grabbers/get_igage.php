@@ -210,8 +210,8 @@ function decode_igage10adjust($email_date,$data,$verbose,$zerostage){
             $sitedata['calcstage']= sprintf("%0.2f",$stage);
         }
     }
-    
-    
+
+
     return $sitedata;
 }
 
@@ -229,13 +229,13 @@ function decode_laser($email_date,$data,$verbose,$zerostage){
     # 9,10     Previous Communication Attempts = value/10 - 200
 
     # NOTE...angle is hardcoded below....need to move this into DB.
-    
+
     $sitedata = array();
     $datalength = strlen($data);
     $email_year = gmdate('Y',(strtotime($email_date)));
     $base_time = strtotime("01Jan$email_year 00:00")-24*3600;
-    
-    
+
+
     $angle = 27.3;
     if($verbose) echo "Length: $datalength\n";
 
@@ -260,7 +260,7 @@ function decode_laser($email_date,$data,$verbose,$zerostage){
         ###Unpack Comm Attempts Voltage
     $array = unpack('n',substr($data,8,2));
     $sitedata['tries'] = ($array[1]/10)-200;
-    
+
     $delta = (sin(deg2rad($angle))*abs($sitedata['distance']))/12;
 
     ###Calculate stage
@@ -321,7 +321,7 @@ function decode_csi($email_date,$data,$verbose,$zerostage){
 }
 
 function decode_susitna($email_date,$data,$verbose,$zerostage){
-    #Used for DGGS Susitna Sites 
+    #Used for DGGS Susitna Sites
 
     # parse 14 byte structure - big endian order
     # bytes     description
@@ -377,7 +377,7 @@ function decode_susitna($email_date,$data,$verbose,$zerostage){
     ###Unpack Wind Dir
     $array = unpack('n',substr($data,14,2));
     $sitedata['shefValues']['UDHRZZ'] = ($array[1]/10)-200;
-    
+
     ###Unpack Wind Gust
     $array = unpack('n',substr($data,16,2));
     $sitedata['shefValues']['UPIRZZ'] = (($array[1]/10)-200)*2.24;
@@ -388,10 +388,10 @@ function decode_susitna($email_date,$data,$verbose,$zerostage){
 
     return $sitedata;
 }
-    
+
 function decode_cordova($email_date,$data,$verbose,$zerostage){
     #Used for Cordova Power Creek Site
-    
+
     # parse 14 byte structure - big endian order
     # bytes     description
     # 1,2       Hours since the start of the current calendar (UTC)
@@ -402,7 +402,7 @@ function decode_cordova($email_date,$data,$verbose,$zerostage){
     # 9,10      Air_Temp = value/100 - 200
     # 11,12     RH = value/100 - 200
     # 13,14     Previous Communication Attempts = value/10 - 200
-    
+
     $sitedata = array();
     $datalength = strlen($data);
     $email_year = gmdate('Y',(strtotime($email_date)));
@@ -438,14 +438,14 @@ function decode_cordova($email_date,$data,$verbose,$zerostage){
 
     ###Unpack Comm Attempts
     $array = unpack('n',substr($data,12,2));
-    $sitedata['shefValues']['YAIRZZ'] = ($array[1]/10)-200;    
+    $sitedata['shefValues']['YAIRZZ'] = ($array[1]/10)-200;
 
-    
-    
-    return $sitedata;   
+
+
+    return $sitedata;
 }
-    
-    
+
+
 /* function dbinsert($sitedata,$mysqli,$logger){
 
     $names = '';
@@ -484,11 +484,11 @@ function csi_to_shef($sitedata,$overWrite = false){
         $shefStr .= $shef." ".$value."/";
     }
     $shefStr .= "\n";
-    
+
     return $shefStr;
-}    
-    
-    
+}
+
+
 function HG_VB_to_shef($sitedata,$overWrite = true){
      #Kludge to convert snowdepth info to inches
     if($sitedata['pe'] == 'SD') $sitedata['calcstage'] = $sitedata['calcstage']*12;
@@ -562,14 +562,14 @@ $numnew =  imap_num_recent($mbox);
 
 
 ######Process each message
-$emails = imap_search($mbox,'ALL');
+$emails = imap_search($mbox,'ALL',SE_UID);
 
 if($emails){
     arsort($emails); //JUST DO ARSORT
     foreach($emails as $email_number) {
         $logger->log("Working on email number: $email_number",PEAR_LOG_NOTICE);
         $sitedata = array();
-        $msgno = $email_number;
+        $msgno = imap_msgno ($mbox,$email_number );
         $text = "";
 
         ######Get the file name and parse out the datestamp
@@ -582,7 +582,7 @@ if($emails){
              $logger->log("Email subject does not contain IMEI: $file",PEAR_LOG_NOTICE);
              imap_mail_move($mbox,$msgno,$final_box);
              continue;
-        }     
+        }
         $struct = imap_fetchstructure($mbox,$msgno);
         //$contentParts = count($struct->parts);
         $fileContent = imap_fetchbody($mbox,$msgno,2);
@@ -628,7 +628,7 @@ if($emails){
                     if(isset($sitedata['shefValues'])){
                         $shefFile .=  csi_to_shef($sitedata);
                     }
-                    else{    
+                    else{
                         $shefFile .= HG_VB_to_shef($sitedata);
                     }
                     $sendshef++;
