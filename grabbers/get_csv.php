@@ -19,6 +19,8 @@ chdir(dirname(__FILE__));
 /* Include config file for paths etc..... */
 require_once('../config.inc.php');
 
+define("LOG_TYPE","FILE");
+
 /* Web Function Library */
 require_once(RESOURCES_DIRECTORY."web_functions.php");
 $mysqli->select_db("aprfc");

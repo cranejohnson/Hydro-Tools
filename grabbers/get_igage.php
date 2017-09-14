@@ -24,6 +24,7 @@ chdir(dirname(__FILE__));
 require_once('../config.inc.php');
 $mysqli->select_db("aprfc");
 
+define("LOG_TYPE","FILE");
 
 date_default_timezone_set('UTC');
 

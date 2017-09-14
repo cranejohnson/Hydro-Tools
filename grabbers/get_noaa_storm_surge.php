@@ -16,6 +16,7 @@ chdir(dirname(__FILE__));
 require_once('../config.inc.php');
 $mysqli->select_db("aprfc");
 
+define("LOG_TYPE","FILE");
 
 //Pear log package
 require_once (PROJECT_ROOT.'/resources/Pear/Log.php');

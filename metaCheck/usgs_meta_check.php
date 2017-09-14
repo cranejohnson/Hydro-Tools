@@ -15,6 +15,9 @@ chdir(dirname(__FILE__));
 require_once('../config.inc.php');
 define('DEFAULT_CACHE_AGE',86400);       /* Define the cache age for downloaded files */
 define('OUTPUT_FOLDER','output/');
+define("LOG_TYPE","FILE");
+
+
 
 /**
  * Include Web Function Library

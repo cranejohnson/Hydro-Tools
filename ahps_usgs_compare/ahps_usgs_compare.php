@@ -18,6 +18,8 @@ chdir(dirname(__FILE__));
 /* Include config file for paths etc..... */
 require_once('../config.inc.php');
 
+define("LOG_TYPE","FILE");
+
 /* Directory for output graphs */
 define("IMAGE_OUTPUT","/var/www/html/tools/gagecompare/ahps_usgs_graphs/");
 #define("IMAGE_OUTPUT","ahps_usgs_graphs/");
