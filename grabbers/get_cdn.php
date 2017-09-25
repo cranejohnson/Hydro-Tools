@@ -178,9 +178,10 @@ foreach($stations as $cdnId => $name){
             if($cdnId == 'snw_dpth'){
                 $data['data'][$shefId] = $tempData[$cdnId]*0.393701;
             }
-            if($cdnId == 'pcpn_amt_pst1hr'){
-                $data['data'][$shefId] = $tempData[$cdnId]*0.0393701;
-            }
+            //Removed the 1 hour precip data as it was questionable compared to the synoptic data
+            //if($cdnId == 'pcpn_amt_pst1hr'){
+            //    $data['data'][$shefId] = $tempData[$cdnId]*0.0393701;
+            //}
 
         }
 
