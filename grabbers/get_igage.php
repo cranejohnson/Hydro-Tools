@@ -331,7 +331,7 @@ function decode_susitna($email_date,$data,$verbose,$zerostage){
     # 3,4       Battery Voltage = value/10 - 200
     # 5,6       AirTemp (hourly average) = value/10 - 200
     # 7,8       RH (hourly average) = value/10 - 200
-    # 9,10      Rain  (PC) = value/10 - 200
+    # 9,10      Rain  (PC) = value/10 - 200 = values in mm / 25.4 = values in inches
     # 11,12     Baro = value/10 - 200
     # 13,14     Windspeed (hourly average) = value/10 - 200
     # 15,16     Wind Dir (hourly vector average) = value/10 - 200
@@ -399,7 +399,7 @@ function decode_cordova($email_date,$data,$verbose,$zerostage){
     #           year = value
     # 3,4       Battery Voltage = value/10 - 200
     # 5,6       Precip_storage = value/10 - 200
-    # 7,8       Precip_TB = value/10 - 200
+    # 7,8       Precip_TB = value/10 - 200 = value in number of tips / 100 = value in inches
     # 9,10      Air_Temp = value/100 - 200
     # 11,12     RH = value/100 - 200
     # 13,14     Previous Communication Attempts = value/10 - 200
@@ -649,9 +649,7 @@ $logger->log("$sendshef Message in shef file",PEAR_LOG_INFO);
 $fileName = "sheffile.hd.iGage.".date('ymdHi');
 
 
-/* Write the file to the local temporary location */
-file_put_contents(TEMP_DIRECTORY.$fileName, $shefFile);
-file_put_contents(TO_LDAD.$fileName, $shefFile);
+
 
 
 
@@ -662,7 +660,12 @@ if($sendshef == 0){
     $logger->log("END",PEAR_LOG_INFO);
     exit();
 }
-
+else{
+    /*Else these is data so move it to temp file and LDAD input*/
+    /* Write the file to the local temporary location */
+    file_put_contents(TEMP_DIRECTORY.$fileName, $shefFile);
+    file_put_contents(TO_LDAD.$fileName, $shefFile);
+}
 $logger->log("END",PEAR_LOG_INFO);
 
 
