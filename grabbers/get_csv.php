@@ -175,6 +175,7 @@ $shefFile =  "SRAK58 PACR ".date('dHi')."\n";
 $shefFile .= "ACRRR3ACR \n";
 $shefFile .= "WGET DATA REPORT \n\n";
 
+$local = false;
 $numLines = 0;
 
 $over = 'R';
@@ -184,7 +185,7 @@ $result = $mysqli->query($query) or die($mysqli->error);
 
 
 //Handle the command line arguments
-$opts = getoptreq('s:d', array());
+$opts = getoptreq('s:d:l', array());
 
 if(!isset($opts["s"])){
     $site = false;
@@ -201,7 +202,10 @@ if(isset($opts["d"])){
 else{
     $debug = false;
 }
-
+if(isset($opts["l"])){
+    $local = true;
+    $logger->log("Local shef file ".$site,PEAR_LOG_INFO);
+}
 
 
 # Procces each site in the configuration table
@@ -490,8 +494,12 @@ while ($row = $result->fetch_assoc()){
 
 
 ##############Output Shef File#####################################
-$fileName = "sheffile.hd.csv.".date('ymdHi');
-
+if($local){
+    $fileName = "sheflocal.csv".date('ymdHi');
+}
+else{
+    $fileName = "sheffile.hd.csv.".date('ymdHi');
+}
 
 /* Write the file to the local temporary location */
 file_put_contents(TEMP_DIRECTORY.$fileName, $shefFile);
