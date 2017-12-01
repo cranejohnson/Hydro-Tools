@@ -222,14 +222,13 @@ function decode_laser($email_date,$data,$verbose,$zerostage){
 
     # parse 14 byte structure - big endian order
     # bytes     description
-    # 1,2       Hours since the start of the current calendar
+    # 1,2       Hours since the start of the current calendar 
     #           year = value
     # 3,4       Battery Voltage = value/10 - 200
-    # 5,6       Air Temperature = value/10 - 200
-    # 7,8      Distance Measurement = value/10 - 200
-    # 9,10     Previous Communication Attempts = value/10 - 200
-
-    # NOTE...angle is hardcoded below....need to move this into DB.
+    # 5,6       Distance_First = value/10 - 200
+    # 7,8      Distance_Strongest = value/10 - 200
+    # 9,10     Distance_Last = value/10 - 200
+    # 11,12     Previous Communication Attempts = value/10 - 200
 
     $sitedata = array();
     $datalength = strlen($data);
@@ -237,7 +236,7 @@ function decode_laser($email_date,$data,$verbose,$zerostage){
     $base_time = strtotime("01Jan$email_year 00:00")-24*3600;
 
 
-    $angle = 27.3;
+    $angle = 45;
     if($verbose) echo "Length: $datalength\n";
 
     $decimal = unpack('n',substr($data,0,2));
@@ -248,25 +247,26 @@ function decode_laser($email_date,$data,$verbose,$zerostage){
 
         ###Unpack Battery Voltage
     $array = unpack('n',substr($data,2,2));
-    $sitedata['battery'] = ($array[1]/10)-200;
-
-        ###Unpack Panel Temperature
-    $array = unpack('n',substr($data,4,2));
-    $sitedata['paneltemp'] = ($array[1]/10)-200;
+    $sitedata['shefValues']['VBIRZZ'] = ($array[1]/10)-200;
 
         ###Unpack Distance
     $array = unpack('n',substr($data,6,2));
-    $sitedata['distance'] = ($array[1]/10)-200;
+    $distance = ($array[1]/10)-200;
+   
+    $delta = (sin(deg2rad($angle))*abs($distance))/12;
+    if($zerostage)$sitedata['shefValues']['SDIR2Z']= sprintf("%0.2f",($zerostage - $delta)*12);
 
-        ###Unpack Comm Attempts Voltage
+        ###Unpack Distance
     $array = unpack('n',substr($data,8,2));
-    $sitedata['tries'] = ($array[1]/10)-200;
-
-    $delta = (sin(deg2rad($angle))*abs($sitedata['distance']))/12;
-
-    ###Calculate stage
-    if($zerostage)$sitedata['calcstage']= sprintf("%0.2f",$zerostage - $delta);
-
+    $distance = ($array[1]/10)-200;
+    $delta = (sin(deg2rad($angle))*abs($distance))/12;
+    if($zerostage)$sitedata['shefValues']['SDIR3Z']= sprintf("%0.2f",($zerostage - $delta)*12);
+        ###Unpack Distance
+    $array = unpack('n',substr($data,10,2));
+    $distance = ($array[1]/10)-200;
+    $delta = (sin(deg2rad($angle))*abs($distance))/12;
+    if($zerostage)$sitedata['shefValues']['SDIR4Z']= sprintf("%0.2f",($zerostage - $delta)*12);
+ 
     return $sitedata;
 }
 
@@ -473,7 +473,7 @@ function decode_cordova($email_date,$data,$verbose,$zerostage){
 } */
 
 
-function csi_to_shef($sitedata,$overWrite = false){
+function csi_to_shef($sitedata,$overWrite = true){
 
     $shefStr = "";
     $over = "";
