@@ -91,13 +91,14 @@ $logger->log("START",PEAR_LOG_INFO);
  */
 function calcDistance($lat1, $lon1, $lat2, $lon2, $unit) {
 
+    if(($lat1 == $lat2) && ($lon1 == $lon2)) return 0;
     $theta = $lon1 - $lon2;
     $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) +  cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
     $dist = acos($dist);
     $dist = rad2deg($dist);
     $miles = $dist * 60 * 1.1515;
     $unit = strtoupper($unit);
-
+    if(is_nan($miles)) return 0;
     if ($unit == "K") {
         return ($miles * 1.609344);
     } else if ($unit == "N") {
@@ -372,7 +373,7 @@ foreach($ahpsReport['sites'] as $site){
 fclose($output);
 //rename to final file name
 if(rename($id,str_replace("temp","csv",$id))){
-    file_put_contents('output/All_meta_check.state',"Last Updated: ".date("F j, Y, H:i")." UTC");
+    file_put_contents('output/All_meta_check.txt',"Last Updated: ".date("F j, Y, H:i")." UTC");
 }
 
 $logger->log("STOP",PEAR_LOG_INFO);
