@@ -110,18 +110,27 @@ function calcDistance($lat1, $lon1, $lat2, $lon2, $unit) {
 
 
 function get_all_USGS_info(){
+    $f = @fopen("ALL_SITE_INFO.rdb", "r+");
+    if ($f !== false) {
+        ftruncate($f, 0);
+        fclose($f);
+    }
     $states = array('AK'=>'Alaska', 'HI'=>'Hawaii', 'CA'=>'California', 'NV'=>'Nevada', 'OR'=>'Oregon', 'WA'=>'Washington', 'AZ'=>'Arizona', 'CO'=>'Colorada', 'ID'=>'Idaho', 'MT'=>'Montana', 'NE'=>'Nebraska', 'NM'=>'New Mexico', 'ND'=>'North Dakota', 'UT'=>'Utah', 'WY'=>'Wyoming', 'AL'=>'Alabama', 'AR'=>'Arkansas', 'IL'=>'Illinois', 'IA'=>'Iowa', 'KS'=>'Kansas', 'KY'=>'Kentucky', 'LA'=>'Louisiana', 'MN'=>'Minnesota', 'MS'=>'Mississippi', 'MO'=>'Missouri', 'OK'=>'Oklahoma', 'SD'=>'South Dakota', 'TX'=>'Texas', 'TN'=>'Tennessee', 'WI'=>'Wisconsin', 'CT'=>'Connecticut', 'DE'=>'Delaware', 'FL'=>'Florida', 'GA'=>'Georgia', 'IN'=>'Indiana', 'ME'=>'Maine', 'MD'=>'Maryland', 'MA'=>'Massachusetts', 'MI'=>'Michigan', 'NH'=>'New Hampshire', 'NJ'=>'New Jersey', 'NY'=>'New York', 'NC'=>'North Carolina', 'OH'=>'Ohio', 'PA'=>'Pennsylvania', 'RI'=>'Rhode Island', 'SC'=>'South Carolina', 'VT'=>'Vermont', 'VA'=>'Virginia', 'WV'=>'West Virginia');
+
     $file = 'USGS_all_active_siteinfo.json';
+    $json = json_decode(file_get_contents($file),true);
 
     foreach($states as $state => $long_name){
         $url = "http://waterservices.usgs.gov/nwis/site/?format=rdb,1.0&siteStatus=active&stateCd=".$state;
-        $json = json_decode(file_get_contents($file),true);
+        //$text = file_get_contents($file);
+        //file_put_contents('ALL_SITE_INFO.rdb',$data,mode,FILE_APPEND);
         $usgs = getUSGS_siteInfo($url);
         foreach($usgs as $usgsID => $info){
             $json[$usgsID] = $info;
         }
-        file_put_contents($file, json_encode($json,128));
     }
+    file_put_contents($file, json_encode($json,128));
+
     return($json);
 }
 
