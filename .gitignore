@@ -10,3 +10,4 @@ metaCheck/output/*.csv
 move2nids.sh
 grabbers/GetNwis/*
 ahps_usgs_compare/ahps_usgs_graphs/*
+UsgsToShef/*

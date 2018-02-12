@@ -19,19 +19,29 @@
 
 
 chdir(dirname(__FILE__));
+date_default_timezone_set('UTC');
 
 /* Include config file for paths etc..... */
-require_once('../config.inc.php');
+define("PROJECT_ROOT",dirname(__FILE__).'/../');
+define("CREDENTIALS_FILE",PROJECT_ROOT."login.php");
+define("LOG_TYPE","FILE");
+define("LOG_DIRECTORY",PROJECT_ROOT."logs/");
+define("TEMP_DIRECTORY",PROJECT_ROOT."tmp/");
+define("TO_LDAD",PROJECT_ROOT."TO_LDAD/");
+define("SHEF_HEADER","SRAK58 PACR ".date('dHi')."\nACRRR3ACR \nWGET DATA REPORT \n\n");
+
+
+include_once(CREDENTIALS_FILE);
+//require_once('../config.inc.php');
 $mysqli->select_db("aprfc");
 
-define("LOG_TYPE","FILE");
 
-date_default_timezone_set('UTC');
+
+
 
 //Pear log package
 require_once (PROJECT_ROOT.'/resources/Pear/Log.php');
-//Pear cache_lite package
-require_once(PROJECT_ROOT.'/resources/Pear/Cache/Lite.php');
+
 
 /**
  * Setup PEAR logging utility
@@ -43,18 +53,6 @@ $fileMask = Log::MAX(PEAR_LOG_INFO);
 $sqlMask = Log::MAX(PEAR_LOG_INFO);
 
 $sessionId = 'ID:'.time();
-if(LOG_TYPE == 'DB'){
-    $conf = array('dsn' => "mysqli://".DB_USER.":".DB_PASSWORD."@".DB_HOST."/".DB_DATABASE,
-            'identLimit' => 255);
-
-    $sql = Log::factory('sql', 'log_table', __file__, $conf);
-    $sql->setMask($sqlMask);
-    $console = Log::factory('console','',$sessionId);
-    $console->setMask($consoleMask);
-    $logger = Log::singleton('composite');
-    $logger->addChild($console);
-    $logger->addChild($sql);
-}
 if(LOG_TYPE == 'FILE'){
     $script = basename(__FILE__, '.php');
     $file = Log::factory('file',LOG_DIRECTORY.$script.'.log',$sessionId);
@@ -447,32 +445,6 @@ function decode_cordova($email_date,$data,$verbose,$zerostage){
 }
 
 
-/* function dbinsert($sitedata,$mysqli,$logger){
-
-    $names = '';
-    $values = '';
-
-
-    foreach($sitedata as $name => $value){
-        #echo "$name : $value\n";
-        if($name == 'DBTABLE') continue;
-        $names .= $name.",";
-        $values .= "'".$value."',";
-    }
-    $names = rtrim($names, ',');
-    $values = rtrim($values,',');
-    $insertquery = "INSERT INTO {$sitedata['DBTABLE']} ($names) VALUES ($values)";
-    echo $insertquery;
-    $result = $mysqli->query($insertquery);
-    echo $result;
-    if(($mysqli->error )&($mysqli->errno != 1062)){
-        $logger->log("dbinsert error:".$mysqli->error,PEAR_LOG_ERR);
-        echo "Failed to load db....".$mysqli->error,PEAR_LOG_ERR;
-    }
-    return $result;
-} */
-
-
 function csi_to_shef($sitedata,$overWrite = true){
 
     $shefStr = "";
@@ -515,10 +487,7 @@ function HG_VB_to_shef($sitedata,$overWrite = true){
 
 $logger->log("START",PEAR_LOG_INFO);
 $sendshef = 0;
-$shefFile =  "SRAK58 PACR ".date('dHi')."\n";
-$shefFile .= "ACRRR3ACR \n";
-$shefFile .= "WGET DATA REPORT \n\n";
-
+$shefFile =  SHEF_HEADER;
 
 #################Mailbox Configuration Settings########################
 $username = GMAIL_USERNAME;
