@@ -422,7 +422,6 @@ while ($row = $result->fetch_assoc()){
 
             #If the code is a skip column character move on to the next value in the data string
             if(in_array($code,$skipCols)){
-
                 continue;   #Go to next data value
             }
 
@@ -453,13 +452,12 @@ while ($row = $result->fetch_assoc()){
             if(isset($match[1])) $value = convert($value,$match[1]);
             
             if(substr($pe,0,2) == "TV"){
-                $shefData['data'][$pe] = round($value,4);
+                $shefData['data'][$pe] = number_format((float)$value, 4, '.', '');
             }
             else{
-                $shefData['data'][$pe] = round($value,2);
+                $shefData['data'][$pe] = number_format((float)$value, 2, '.', '');
             }        
             $hasData++;
-
         }
 
 
