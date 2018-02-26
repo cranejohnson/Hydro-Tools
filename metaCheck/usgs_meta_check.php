@@ -12,18 +12,24 @@
 /* Configuration information */
 chdir(dirname(__FILE__));
 
-require_once('../config.inc.php');
+date_default_timezone_set('UTC');
+
+
 define('DEFAULT_CACHE_AGE',86400);       /* Define the cache age for downloaded files */
 define('OUTPUT_FOLDER','output/');
 define("LOG_TYPE","FILE");
-
+define("PROJECT_ROOT",'/usr/local/apps/scripts/bcj/hydroTools/');
+define("LOG_DIRECTORY",PROJECT_ROOT."logs/");
+define("CACHE_DIR",PROJECT_ROOT."cache/");
+define("URL_AHPSREPORT","http://water.weather.gov/monitor/ahpsreport.php");
+define("URL_AHPSNOTES","http://water.weather.gov/monitor/hydronote_report.php");
 
 
 /**
  * Include Web Function Library
  */
 
-require_once(RESOURCES_DIRECTORY."web_functions.php");
+require_once(PROJECT_ROOT."resources/web_functions.php");
 
 
 /**
@@ -35,9 +41,10 @@ set_time_limit(900);
 
 
 //Pear log package
-require_once (PROJECT_ROOT.'/resources/Pear/Log.php');
+require_once (PROJECT_ROOT.'resources/Pear/Log.php');
+
 //Pear cache_lite package
-require_once(PROJECT_ROOT.'/resources/Pear/Cache/Lite.php');
+require_once(PROJECT_ROOT.'resources/Pear/Cache/Lite.php');
 
 /**
  * Setup PEAR logging utility
@@ -49,18 +56,7 @@ $fileMask = Log::MAX(PEAR_LOG_INFO);
 $sqlMask = Log::MAX(PEAR_LOG_INFO);
 
 $sessionId = 'ID:'.time();
-if(LOG_TYPE == 'DB'){
-    $conf = array('dsn' => "mysqli://".DB_USER.":".DB_PASSWORD."@".DB_HOST."/".DB_DATABASE,
-            'identLimit' => 255);
 
-    $sql = Log::factory('sql', 'log_table', __file__, $conf);
-    $sql->setMask($sqlMask);
-    $console = Log::factory('console','',$sessionId);
-    $console->setMask($consoleMask);
-    $logger = Log::singleton('composite');
-    $logger->addChild($console);
-    $logger->addChild($sql);
-}
 if(LOG_TYPE == 'FILE'){
     $script = basename(__FILE__, '.php');
     $file = Log::factory('file',LOG_DIRECTORY.$script.'.log',$sessionId);
@@ -76,6 +72,7 @@ if(LOG_TYPE == 'NULL'){
 }
 
 $logger->log("START",PEAR_LOG_INFO);
+
 
 
 /**
@@ -310,7 +307,7 @@ foreach($ahpsReport['sites'] as $site){
     /* This assumes there is a USGS site NWIS information available */
     $usgs = array();
 
-    /* Get USGS NWIS site informaiton */
+    /* Get USGS NWIS site information */
     if(strlen($nwsUSGS) > 7){
         if(isset($usgsInfo[$nwsUSGS])){
             $array['USGS_lat'] = floatval($usgsInfo[$nwsUSGS]['dec_lat_va']);

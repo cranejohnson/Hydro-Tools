@@ -6,7 +6,7 @@ tmp/*
 TO_LDAD/*
 push2Ldad.php
 *.state
-metaCheck/output/*.csv
+metaCheck/output/All_meta_check.*
 move2nids.sh
 grabbers/GetNwis/*
 ahps_usgs_compare/ahps_usgs_graphs/*
